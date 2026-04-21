@@ -11,6 +11,15 @@
     <style>
         body { display: flex; justify-content: center; align-items: center; 
             min-height: 100vh; transition: 0.3s;
+            flex-direction: column;
+        }
+
+        .back-link {
+        display: block;
+        margin-bottom: 20px;
+        color: var(--primary);
+        text-decoration: none;
+        font-weight: bold;
         }
         .theme-toggle {
             position: absolute; top: 20px; right: 20px; cursor: pointer; padding: 10px 15px;
@@ -51,6 +60,7 @@
 
 <div class="theme-toggle" id="themeBtn"><i class="fa-solid fa-circle-half-stroke"></i> 模式切換</div>
 
+<a href="../index.html" class="back-link">← 返回首頁工具列表</a>
 <div class="card">
     <h2 style="margin: 0;">萬用圖片轉 WebP</h2>
     <p style="font-size: 14px; color: var(--text-dim);">支援 PNG, JPG, HEIC 轉 WebP</p>
