@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>極客圖片轉檔 - 支援 HEIC & 批次 WebP</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
+    <style>
+        :root {
+            --bg: #f4f4f9; --card-bg: #ffffff; --text-main: #333333;
+            --text-dim: #666666; --border: #dddddd; --drop-bg: #fafafa; --primary: #3b82f6;
+        }
+        [data-theme="dark"] {
+            --bg: #121212; --card-bg: #1e1e1e; --text-main: #e0e0e0;
+            --text-dim: #a0a0a0; --border: #333333; --drop-bg: #252525;
+        }
+        body { 
+            font-family: system-ui, -apple-system, sans-serif; background: var(--bg); 
+            color: var(--text-main); display: flex; justify-content: center; align-items: center; 
+            min-height: 100vh; margin: 0; transition: 0.3s;
+        }
+        .theme-toggle {
+            position: absolute; top: 20px; right: 20px; cursor: pointer; padding: 10px 15px;
+            background: var(--card-bg); border: 1px solid var(--border); border-radius: 50px;
+            display: flex; align-items: center; gap: 8px; font-size: 14px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .card { 
+            background: var(--card-bg); padding: 2rem; border-radius: 20px; 
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1); width: 90%; max-width: 500px; 
+            text-align: center; border: 1px solid var(--border);
+        }
+        #drop-zone { 
+            border: 2px dashed var(--border); border-radius: 12px; padding: 40px 20px; 
+            cursor: pointer; background: var(--drop-bg); margin: 20px 0; transition: 0.3s;
+        }
+        #drop-zone.hover { border-color: var(--primary); background: #3b82f61a; }
+        .controls { 
+            margin: 20px 0; background: var(--drop-bg); padding: 15px; border-radius: 10px;
+            display: flex; align-items: center; gap: 10px;
+        }
+        input[type="range"] { flex: 1; }
+        #qualityValue { font-weight: bold; color: var(--primary); width: 40px; }
+        .file-list { 
+            margin-top: 15px; text-align: left; max-height: 150px; overflow-y: auto; 
+            border: 1px solid var(--border); border-radius: 8px; display: none; 
+        }
+        .file-item { padding: 8px 12px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; font-size: 13px; }
+        button { 
+            background: var(--primary); color: white; border: none; padding: 14px; 
+            border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; width: 100%; transition: 0.2s;
+        }
+        button:disabled { background: #ccc; cursor: not-allowed; }
+        .status-tag { font-size: 11px; padding: 2px 6px; border-radius: 4px; background: #eee; color: #666; }
+        .heic-tag { background: #fff3cd; color: #856404; }
+    </style>
+</head>
+<body>
+
+<div class="theme-toggle" id="themeBtn">
+    <span id="themeIcon">🌙</span> <span id="themeText">切換模式</span>
+</div>
+
+<div class="card">
+    <h2 style="margin: 0;">萬用圖片轉 WebP</h2>
+    <p style="font-size: 14px; color: var(--text-dim);">支援 PNG, JPG, HEIC 轉 WebP</p>
+
+    <div id="drop-zone">
+        <p>拖曳圖片至此，或點擊選擇</p>
+        <p style="font-size: 12px; color: var(--text-dim); margin-top: 5px;">(支援 iPhone HEIC 格式)</p>
+        <input type="file" id="fileInput" multiple accept="image/*,.heic,.HEIC" style="display: none;">
+    </div>
+
+    <div class="controls">
+        <label style="font-size: 14px;">品質</label>
+        <input type="range" id="quality" min="0.1" max="1.0" step="0.1" value="0.8">
+        <span id="qualityValue">80%</span>
+    </div>
+
+    <div class="file-list" id="fileList"></div>
+    <button id="convertBtn" disabled>開始轉檔並下載 ZIP</button>
+    <canvas id="canvas" style="display: none;"></canvas>
+</div>
+
+<script>
+    // --- 深淺模式邏輯 ---
+    const html = document.documentElement;
+    const themeBtn = document.getElementById('themeBtn');
+    if (localStorage.getItem('theme') === 'dark') html.setAttribute('data-theme', 'dark');
+    themeBtn.onclick = () => {
+        const isDark = html.getAttribute('data-theme') === 'dark';
+        isDark ? html.removeAttribute('data-theme') : html.setAttribute('data-theme', 'dark');
+        localStorage.setItem('theme', isDark ? 'light' : 'dark');
+    };
+
+    // --- 轉檔邏輯 ---
+    const fileInput = document.getElementById('fileInput');
+    const dropZone = document.getElementById('drop-zone');
+    const fileList = document.getElementById('fileList');
+    const convertBtn = document.getElementById('convertBtn');
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+
+    let selectedFiles = [];
+
+    dropZone.onclick = () => fileInput.click();
+    fileInput.onchange = (e) => handleFiles(e.target.files);
+    dropZone.ondragover = (e) => { e.preventDefault(); dropZone.classList.add('hover'); };
+    dropZone.ondragleave = () => dropZone.classList.remove('hover');
+    dropZone.ondrop = (e) => { e.preventDefault(); dropZone.classList.remove('hover'); handleFiles(e.dataTransfer.files); };
+
+    function handleFiles(files) {
+        selectedFiles = Array.from(files);
+        if (selectedFiles.length > 0) {
+            fileList.innerHTML = selectedFiles.map(f => {
+                const isHeic = f.name.toLowerCase().endsWith('.heic');
+                return `<div class="file-item">
+                    <span>${f.name}</span>
+                    <span class="status-tag ${isHeic ? 'heic-tag' : ''}">${isHeic ? 'HEIC 待轉換' : '待處理'}</span>
+                </div>`;
+            }).join('');
+            fileList.style.display = 'block';
+            convertBtn.disabled = false;
+        }
+    }
+
+    convertBtn.onclick = async () => {
+        convertBtn.innerText = '正在處理 (HEIC 可能較慢)...';
+        convertBtn.disabled = true;
+        const zip = new JSZip();
+        const quality = parseFloat(document.getElementById('quality').value);
+
+        for (let file of selectedFiles) {
+            try {
+                let imageSource;
+                // 檢查是否為 HEIC
+                if (file.name.toLowerCase().endsWith('.heic')) {
+                    const convertedBlob = await heic2any({ blob: file, toType: "image/jpeg", quality: 0.8 });
+                    // heic2any 可能回傳陣列，取第一個
+                    imageSource = Array.isArray(convertedBlob) ? convertedBlob[0] : convertedBlob;
+                } else {
+                    imageSource = file;
+                }
+
+                // 轉為 ImageBitmap
+                const img = await createImageBitmap(imageSource);
+                canvas.width = img.width;
+                canvas.height = img.height;
+                ctx.drawImage(img, 0, 0);
+
+                const webpBlob = await new Promise(res => canvas.toBlob(res, 'image/webp', quality));
+                const newName = file.name.replace(/\.[^/.]+$/, "") + ".webp";
+                zip.file(newName, webpBlob);
+            } catch (err) {
+                console.error("檔案處理失敗:", file.name, err);
+            }
+        }
+
+        const content = await zip.generateAsync({type: "blob"});
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(content);
+        link.download = "webp_images_collection.zip";
+        link.click();
+
+        convertBtn.innerText = '開始轉檔並下載 ZIP';
+        convertBtn.disabled = false;
+    };
+</script>
+</body>
+</html>
