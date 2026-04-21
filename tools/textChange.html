@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.11.3/jquery.min.js	"></script>
+
+<!-- <link rel="stylesheet" type="text/css" href="css/normalize.css" /> -->
+<link rel="stylesheet" type="text/css" href="../fonts/css/all.css" />
+<link rel="stylesheet" href="../css/root.css">
+
+<title>CSS Unit Converter Tool</title>
+
+<style>
+:root{
+  --accent:#ee9b00;
+  --text:#ffffff;
+  --sub:#aaaaaa;
+}
+
+*{box-sizing:border-box}
+
+html{
+  font-size: 16px;
+}
+
+body{
+  margin:0;
+  background:var(--bg);
+  font-family: "Segoe UI", system-ui, sans-serif;
+  color:var(--text);
+  padding: 40px 20px;
+  font-size: 16px;
+}
+
+main{
+  max-width:1000px;
+  margin:auto;
+}
+
+h1{
+  font-size:1.75rem;
+  margin: 0;
+  margin-bottom:30px;
+  letter-spacing:1px;
+  text-align: center;
+}
+
+h3, h4{
+  margin: 0;
+}
+
+p{
+  margin: 0;
+}
+
+.card{
+  background:var(--card-bg);
+  border-radius:1em;
+  padding:30px;
+  box-shadow:0 20px 40px rgba(0,0,0,.4);
+  margin-bottom:30px;
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-gap: 1em;
+}
+
+.card_cont{
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  grid-gap: 20px;
+}
+
+.set_box{
+  display:grid;
+  grid-template-columns:repeat(2, 1fr);
+  gap:20px;
+}
+
+.fontSize .set_box>div:first-child{
+  grid-column: 1 / span 2;
+}
+
+label{
+  font-size:0.875em;
+  color:var(--sub);
+  display:block;
+  margin-bottom:6px;
+}
+
+input{
+  width:100%;
+  padding:10px 12px;
+  border-radius:8px;
+  border:none;
+  outline:none;
+  font-size:1rem;
+}
+
+input[disabled]{color: #FFFFFF;}
+
+.result{
+  font-size:1em;
+  line-height:1.8;
+}
+
+.result h4{margin-top: 0; margin-bottom: .5em;}
+
+.result>div{
+  background: rgba(255,255,255,.2);
+  padding: 1em;
+  border-radius: 10px;
+  height: calc(100% - 2.3em);
+  color:#FFFFFF;
+}
+
+.result span{
+  color:var(--accent);
+  font-weight:bold;
+}
+
+.copyText{
+  margin-left: .5em;
+  cursor: pointer;
+}
+
+.card.hypo .set_box>label{
+  grid-column: 1 / span 2;
+}
+
+footer{
+  text-align:center;
+  font-size:0.8125em;
+  color:var(--sub);
+  margin-top:40px;
+}
+
+@media (max-width:1024px) {
+  .card_cont{grid-template-columns: 1fr;}
+  .result h4{margin-bottom: .5em;}
+}
+
+@media (max-width:600px) {
+  .card{padding: 1em;}
+  .set_box{grid-template-columns: 1fr;}
+  .fontSize .set_box>div:first-child{grid-column: unset;}
+}
+
+
+@media (max-width:450px) {
+  html, body {
+    font-size: 14px;
+  }
+}
+  </style>
+</head>
+
+<body>
+  
+<div class="theme-toggle" id="themeBtn"><i class="fa-solid fa-circle-half-stroke"></i> 模式切換</div>
+<div class="wrapper">
+  <main>
+    <h1>CSS Unit Converter Tool</h1>
+
+    <div class="card fontSize">
+      <h3>字體換算</h3>
+      <div class="card_cont">
+        <div class="set_box">
+          <div>
+            <label>PX</label>
+            <input type="number" id="px" value="16">
+          </div>
+          
+          <div>
+            <label>rem (html基準)</label>
+            <input type="number" id="root" value="16">
+          </div>
+
+          <div>
+            <label>em (父層基準)</label>
+            <input type="number" id="parent" value="16">
+          </div>
+
+          <div>
+            <label>視窗寬度</label>
+            <input type="number" id="dw" disabled>
+          </div>
+
+          <div>
+            <label>視窗高度</label>
+            <input type="number" id="dh" disabled>
+          </div>
+        </div>
+
+        <div class="result">
+          <h4>換算結果</h4>
+          <div id="result_size">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card hypo">
+      <h3>斜邊計算 (Hypotenuse)</h3>
+      <div class="set_box">
+        <div>
+          <label>A邊</label>
+          <input type="number" id="a" value="100">
+        </div>
+        <div>
+          <label>B邊</label>
+          <input type="number" id="b" value="100">
+        </div>
+      </div>
+      <div class="result">
+        <h4>換算結果</h4>
+        <div id="result_hypo"></div>
+      </div>
+    </div>
+
+    <footer>
+      Built for Front-End Workflow
+    </footer>
+    
+  </main>
+</div>
+
+<script>
+    const html = document.documentElement;
+    const themeBtn = document.getElementById('themeBtn');
+    if (localStorage.getItem('theme') === 'dark') html.setAttribute('data-theme', 'dark');
+    themeBtn.onclick = () => {
+        const isDark = html.getAttribute('data-theme') === 'dark';
+        isDark ? html.removeAttribute('data-theme') : html.setAttribute('data-theme', 'dark');
+        localStorage.setItem('theme', isDark ? 'light' : 'dark');
+    };
+</script>
+
+<script>
+const pxInput = document.getElementById('px');
+const rootInput = document.getElementById('root');
+const parentInput = document.getElementById('parent');
+const dwInput = document.getElementById('dw');
+const dhInput = document.getElementById('dh');
+
+const result = document.getElementById('result_size');
+const hypoResult = document.getElementById('result_hypo');
+  
+// 自動帶入當前視窗大小
+function setWindowSize(){
+  dwInput.value = window.innerWidth;
+  dhInput.value = window.innerHeight;
+}
+setWindowSize();
+update();
+
+function round(num){
+  return Number(num.toFixed(4));
+}
+
+function update(){
+  const px = parseFloat(pxInput.value);
+  const root = parseFloat(rootInput.value);
+  const parent = parseFloat(parentInput.value);
+  const dw = parseFloat(dwInput.value);
+  const dh = parseFloat(dhInput.value);
+
+  if(isNaN(px)){
+    result.innerHTML = '';
+    return;
+  }
+
+  const rem = round(px / root);
+  const em = round(px / parent);
+  const vw = round(px / (dw / 100));
+  const vh = round(px / (dh / 100));
+  const percent = round(px / dw * 100);
+
+  result.innerHTML = `
+    <p>rem (root ${root}px): <span>${rem}rem</span><a class="copyText"><i class="fa-solid fa-copy"></i></a></p>
+    <p>em (parent ${parent}px): <span>${em}em</span><a class="copyText"><i class="fa-solid fa-copy"></i></a></p>
+    <p>vw: <span>${vw}vw</span><a class="copyText"><i class="fa-solid fa-copy"></i></a></p>
+    <p>vh: <span>${vh}vh</span><a class="copyText"><i class="fa-solid fa-copy"></i></a></p>
+    <p>%: <span>${percent}%</span><a class="copyText"><i class="fa-solid fa-copy"></i></a></p>
+  `;
+}
+
+[pxInput, rootInput, parentInput].forEach(el=>{
+  el.addEventListener('input', update);
+});
+
+// resize 自動更新
+window.addEventListener('resize', ()=>{
+  setWindowSize();
+  update();
+});
+
+// Hypotenuse
+const aInput = document.getElementById('a');
+const bInput = document.getElementById('b');
+
+function updateHypo(){
+  const a = parseFloat(aInput.value);
+  const b = parseFloat(bInput.value);
+
+  if(isNaN(a) || isNaN(b)){
+    hypoResult.innerHTML = '';
+    return;
+  }
+
+  const c = round(Math.sqrt(a*a + b*b));
+  hypoResult.innerHTML = `斜邊 = <span>${c}</span><a class="copyText"><i class="fa-solid fa-copy"></i></a>`;
+}
+
+[aInput,bInput].forEach(el=>{
+  el.addEventListener('input', updateHypo);
+});
+
+updateHypo()
+
+// 事件代理處理動態生成的 copy 按鈕
+$(document).on('click', 'a.copyText', function () {
+
+  const text = $(this).siblings('span').text();
+
+  if (navigator.clipboard && window.isSecureContext) {
+
+    navigator.clipboard.writeText(text)
+    // .then(function () {
+    //   alert('已複製：' + text);
+    // });
+
+  } else {
+
+    const textarea = document.createElement("textarea");
+    textarea.value = text;
+    textarea.style.position = "fixed";
+    textarea.style.opacity = 0;
+
+    document.body.appendChild(textarea);
+    textarea.select();
+    document.execCommand("copy");
+    document.body.removeChild(textarea);
+
+    // alert('已複製：' + text);
+  }
+
+});
+</script>
+</body>
+</html>

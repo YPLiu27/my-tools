@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.11.3/jquery.min.js	"></script>
+
+<!-- <link rel="stylesheet" type="text/css" href="css/normalize.css" /> -->
+<link rel="stylesheet" type="text/css" href="http://work.ykqk.idv.tw/fonts/css/all.css" />
+
+<title>CSS Unit Converter Tool</title>
+</head>
+
+<body>
+<style>
+:root {
+  --bg: #043336;
+  --card: #04585e;
+  --accent: #ee9b00;
+  --text: #ffffff;
+  --textD: #444444;
+  --sub: #aaaaaa;
+}
+
+* {
+  box-sizing: border-box;
+
+}
+
+html {
+  font-size: 16px;
+}
+
+body,
+p,
+ul {
+  margin: 0;
+  padding: 0;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+table {
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
+td,
+th {
+  padding: 0;
+}
+
+ul,
+ol,
+li {
+  list-style: none;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+em {
+  font-style: normal;
+}
+
+dl,
+dt,
+dd,
+figure {
+  margin: 0;
+}
+
+img {
+  display: block;
+}
+
+/* Edit */
+
+body {
+  margin: 0;
+  background: var(--bg);
+  font-family: "Segoe UI", system-ui, sans-serif;
+  color: var(--text);
+  font-size: 16px;
+}
+
+.cen_1600 {
+  max-width: 1600px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.cen_1400 {
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.cen_1200 {
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.cen_1000 {
+  max-width: 1000px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.cen_960 {
+  max-width: 960px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.edit_flex {
+  display: flex;
+  flex-flow: row wrap;
+  justify-content: center;
+  align-items: center;
+  align-content: center;
+}
+
+.edit_flex_col {
+  display: flex;
+  flex-flow: column;
+  justify-content: center;
+  align-items: center;
+  align-content: center;
+}
+
+.edit_flex_jBet {
+  justify-content: space-between;
+}
+
+.edit_flex_jStar {
+  justify-content: flex-start;
+}
+
+.edit_flex_jEnd {
+  justify-content: flex-end;
+}
+
+.edit_flex_aStar {
+  align-items: flex-start;
+  align-content: flex-start;
+}
+
+.edit_flex_aEnd {
+  align-items: flex-end;
+  align-content: flex-end;
+}
+
+.edit_flex_aStretch {
+  align-items: stretch;
+  align-content: stretch;
+}
+
+.edit_flex_rowRe {
+  flex-direction: row-reverse;
+}
+
+.clear {
+  clear: both;
+}
+
+.all_box {
+  width: 100%;
+  min-height: 100vh;
+  /* position: fixed; */
+  left: 0;
+  top: 0;
+  line-height: 2;
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.all_box main {
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-gap: 2em;
+  max-width: 800px;
+}
+
+.all_box h1{
+  font-size:1.75rem;
+  margin: 0;
+  margin-bottom:30px;
+  letter-spacing:1px;
+}
+
+.all_box h2 {
+  margin-bottom: 2rem;
+  font-size: 1.25em;
+  color: var(--accent);
+  letter-spacing: 1px;
+}
+
+.card {
+  background: var(--card);
+  border-radius: 16px;
+  padding: 30px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, .4);
+}
+
+.card h3 {
+  line-height: 1.5;
+  font-weight: normal;
+  font-weight: bold;
+  letter-spacing: .1em;
+}
+
+.card h3 b {
+  margin-top: .5em;
+}
+
+.card h5 {
+  font-size: 1.2em;
+  letter-spacing: .1em;
+}
+
+.card input,
+.card textarea {
+  background: #FFFFFF;
+  color: var(--textD);
+  border: 1px solid var(--sub);
+  padding: .3rem .5rem;
+  max-width: 100%;
+  width: 100%;
+  border-radius: .5rem;
+  border: 0;
+}
+
+.card input {
+  text-align: center;
+  font-weight: normal;
+  font-size: 1rem;
+}
+
+.card input[disabled]{
+  background: rgba(255,255,255,.2);
+  color: inherit;
+}
+
+.checkMedia {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  grid-gap: 30px;
+}
+
+.checkMedia input{
+  font-size: 1.8em;
+  font-weight: 600;
+}
+
+.checkMedia h3 b{
+  margin-top: 1em;
+}
+
+.fontSize_tool {
+  width: 100%;
+  border-radius: 1em;
+  overflow: hidden;
+}
+
+.fontSize_tool .text {
+  margin-top: 1em;
+  height: 100%;
+  max-height: calc(100% - 2.17rem);
+}
+
+.fontSize_tool .text p {
+  margin-bottom: 1em;
+}
+
+.fontSize_tool textarea {
+  width: 100%;
+  display: block;
+  min-height: 10em;
+}
+
+.fontSize_tool .text p input {
+  width: auto;
+  max-width: 4em;
+}
+
+.text_set {
+  display: flex;
+  justify-content: center;
+}
+
+.text_set p {
+  padding: 0 .5em;
+}
+
+footer {
+  text-align: center;
+  font-size: 13px;
+  color: var(--sub);
+  margin-top: 2rem;
+
+}
+
+
+@media (max-width:1440px) {
+  /*螢幕寬度小於1440px時-螢幕*/
+}
+
+@media (max-width:750px) {
+
+  /*螢幕寬度小於950px時-平板*/
+  .all_box main {
+    grid-template-columns: 1fr;
+    max-width: 500px;
+  }
+  .checkMedia{
+    grid-template-columns: 1fr;
+    grid-gap: 30px;
+  }
+  .fontSize_tool textarea {
+    height: auto;
+    max-height: unset;
+  }
+}
+
+@media (max-width:750px) {
+
+}
+
+
+@media (max-width:450px) {
+  html, body {
+    font-size: 14px;
+  }
+  .all_box h1{
+    font-size: 1.5rem;
+  }
+  .card{
+    padding: 1em;
+  }
+}
+
+@media (max-width:340px) {
+  .text_set {
+    display: block;
+  }
+}
+</style>
+<div class="all_box edit_flex_col">
+  <h1>Customer Preview Tool</h1>
+  <main class="cen_1200">
+    <div class="card checkMedia">
+      <h3 class="edit_flex_col">目前瀏覽器為<b><input type="text" id="browser" disabled></input></b></h3>
+      <h3 class="edit_flex_col">螢幕解析度<b><input type="text" id="resolution" disabled></input></b></h3>
+    </div>
+    <div class="card fontSize_tool">
+      <h3>字體呈現參考</h3>
+      <div class="text">
+        <div class="text_set">
+          <p>
+            字體
+            <input type="number" min="10" max="100" id="fontSizeInput" value="16" oninput="if(value.length>3)value=value.slice(0,3);"> px
+          </p>
+          <p>
+            行高
+            <input type="number" min="1" max="3" id="lineHeight" value="1.8" step="0.1" oninput="if(this.value > 3) this.value = 3;"> 倍
+          </p>
+        </div>
+        <textarea id="textShow" placeholder="請輸入參考文字..."></textarea>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    Built for Front-End Workflow
+  </footer>
+</div><!--all_box-->
+<script>
+  const userAgent = navigator.userAgent;
+  let browser = "Unknown";
+
+  if (userAgent.indexOf("Chrome") > -1 && userAgent.indexOf("Edg") === -1) {
+      browser = "Google Chrome";
+  } else if (userAgent.indexOf("Edg") > -1) {
+      browser = "Microsoft Edge";
+  } else if (userAgent.indexOf("Firefox") > -1) {
+      browser = "Mozilla Firefox";
+  } else if (userAgent.indexOf("Safari") > -1 && userAgent.indexOf("Chrome") === -1) {
+      browser = "Apple Safari";
+  }
+  let resolution = `${screen.width} x ${screen.height}`
+
+
+  $('#browser').val(browser)
+  $('#resolution').val(resolution)
+
+  const fontInput = document.getElementById("fontSizeInput");
+  const lineHeightInput = document.getElementById("lineHeight");
+  const textarea = document.getElementById("textShow");
+
+  // 預設 16px
+  textarea.style.fontSize = fontInput.value + "px";
+  textarea.style.lineHeight = lineHeightInput.value;
+
+  // 即時改變字體大小及行高
+  fontInput.addEventListener("input", function(){
+    const size = this.value;
+    if(size && size > 0){
+      textarea.style.fontSize = size + "px";
+    }
+  });
+  lineHeightInput.addEventListener("input", function(){
+    const lineHeight = this.value;
+    if(lineHeight && lineHeight > 0){
+      textarea.style.lineHeight = lineHeight;
+    }
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <style>
+        /* 與上面相同的 :root, body, container, card, back-link */
+        textarea { width: 100%; height: 250px; background: var(--drop-bg); color: var(--text-main); border: 1px solid var(--border); border-radius: 12px; padding: 15px; box-sizing: border-box; font-size: 16px; resize: none; }
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
+        .stat-item { background: var(--drop-bg); padding: 15px; border-radius: 10px; border: 1px solid var(--border); }
+        .stat-num { display: block; font-size: 24px; font-weight: bold; color: var(--primary); }
+    </style>
+</head>
+<body>
+<div class="container">
+    <a href="index.html" class="back-link">← 返回首頁工具列表</a>
+    <div class="card">
+        <h2>📝 字數統計器</h2>
+        <textarea id="txt" placeholder="請在此輸入或貼上文字..."></textarea>
+        <div class="stats-grid">
+            <div class="stat-item"><span id="c1" class="stat-num">0</span>字元數</div>
+            <div class="stat-item"><span id="c2" class="stat-num">0</span>總單字量</div>
+        </div>
+    </div>
+</div>
+<script>
+    if (localStorage.getItem('theme') === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+    document.getElementById('txt').oninput = function() {
+        const v = this.value;
+        document.getElementById('c1').innerText = v.length;
+        document.getElementById('c2').innerText = v.trim() ? v.trim().split(/\s+/).length : 0;
+    };
+</script>
+</body>
+</html>

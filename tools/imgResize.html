@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+  <link rel="stylesheet" href="../css/root.css">
+  <style>
+    .container {
+      max-width: 500px;
+      margin: 0 auto;
+      text-align: center;
+    }
+
+    .back-link {
+      display: block;
+      margin-bottom: 20px;
+      color: var(--primary);
+      text-decoration: none;
+      font-weight: bold;
+    }
+
+    .card {
+      background: var(--card-bg);
+      padding: 30px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    .result-box {
+      background: var(--drop-bg);
+      padding: 20px;
+      border-radius: 12px;
+      font-family: monospace;
+      font-size: 24px;
+      margin-bottom: 20px;
+      word-break: break-all;
+      border: 1px dashed var(--primary);
+      color: var(--primary);
+    }
+
+    .controls-group {
+      background: var(--drop-bg);
+      padding: 15px;
+      border-radius: 10px;
+      margin-bottom: 10px;
+      text-align: left;
+    }
+
+    .setting {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    input[type="range"] {
+      flex: 1;
+      margin: 0 10px;
+    }
+
+    button {
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 15px;
+      border-radius: 10px;
+      width: 100%;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    button:hover {
+      opacity: 0.9;
+    }
+
+    #drop-zone {
+      border: 2px dashed var(--border);
+      border-radius: 12px;
+      padding: 40px;
+      cursor: pointer;
+      background: var(--drop-bg);
+      margin-bottom: 20px;
+    }
+
+    .input-group {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    input[type="number"] {
+      width: 100%;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--drop-bg);
+      color: var(--text-main);
+    }
+  </style>
+</head>
+
+<body>
+  
+  <div class="theme-toggle" id="themeBtn">🌙 模式切換</div>
+  <div class="container">
+    <a href="../index.html" class="back-link">← 返回首頁工具列表</a>
+    <div class="card">
+      <h2>📏 圖片尺寸調整</h2>
+      <div id="drop-zone" onclick="document.getElementById('f').click()">點擊上傳圖片<input type="file" id="f" hidden
+          accept="image/*"></div>
+      <div class="input-group">
+        <input type="number" id="w" placeholder="新寬度 (px)">
+        <input type="number" id="h" placeholder="新高度 (px)">
+      </div>
+      <button onclick="rsz()">調整尺寸並下載</button>
+    </div>
+  </div>
+  
+<script>
+    const html = document.documentElement;
+    const themeBtn = document.getElementById('themeBtn');
+    if (localStorage.getItem('theme') === 'dark') html.setAttribute('data-theme', 'dark');
+    themeBtn.onclick = () => {
+        const isDark = html.getAttribute('data-theme') === 'dark';
+        isDark ? html.removeAttribute('data-theme') : html.setAttribute('data-theme', 'dark');
+        localStorage.setItem('theme', isDark ? 'light' : 'dark');
+    };
+</script>
+  <script>
+    if (localStorage.getItem('theme') === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+    function rsz() {
+      const file = document.getElementById('f').files[0];
+      if (!file) return alert("請先選擇圖片");
+      const img = new Image();
+      img.src = URL.createObjectURL(file);
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = document.getElementById('w').value || img.width;
+        canvas.height = document.getElementById('h').value || img.height;
+        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+        const a = document.createElement('a');
+        a.href = canvas.toDataURL('image/jpeg', 0.9);
+        a.download = "resized_image.jpg";
+        a.click();
+      };
+    }
+  </script>
+</body>
+
+</html>
