@@ -2,12 +2,19 @@
 <html lang="zh-TW">
 
 <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>圖片尺寸調整 - 工具箱</title>
+  <script src="../js/jquery-3.3.1.min.js"></script>
+  <script src="../js/main.js"></script>
   <link rel="stylesheet" href="../css/root.css">
+  <link rel="stylesheet" href="../fonts/css/all.css">
   <style>
     .container {
       max-width: 500px;
-      margin: 0 auto;
-      text-align: center;
+      display: flex;
+      justify-content: center;
+      flex-direction: column;
     }
 
     .back-link {
@@ -16,14 +23,6 @@
       color: var(--primary);
       text-decoration: none;
       font-weight: bold;
-    }
-
-    .card {
-      background: var(--card-bg);
-      padding: 30px;
-      border-radius: 20px;
-      border: 1px solid var(--border);
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
     }
 
     .result-box {
@@ -97,16 +96,18 @@
       background: var(--drop-bg);
       color: var(--text-main);
     }
+
+    .card h2{
+      margin-top: 0;
+    }
   </style>
 </head>
 
 <body>
   
-  <div class="theme-toggle" id="themeBtn">🌙 模式切換</div>
   <div class="container">
-    <a href="../index.html" class="back-link">← 返回首頁工具列表</a>
     <div class="card">
-      <h2>📏 圖片尺寸調整</h2>
+      <h2><i class="fa-solid fa-image"></i> 圖片尺寸調整</h2>
       <div id="drop-zone" onclick="document.getElementById('f').click()">點擊上傳圖片<input type="file" id="f" hidden
           accept="image/*"></div>
       <div class="input-group">
@@ -117,16 +118,6 @@
     </div>
   </div>
   
-<script>
-    const html = document.documentElement;
-    const themeBtn = document.getElementById('themeBtn');
-    if (localStorage.getItem('theme') === 'dark') html.setAttribute('data-theme', 'dark');
-    themeBtn.onclick = () => {
-        const isDark = html.getAttribute('data-theme') === 'dark';
-        isDark ? html.removeAttribute('data-theme') : html.setAttribute('data-theme', 'dark');
-        localStorage.setItem('theme', isDark ? 'light' : 'dark');
-    };
-</script>
   <script>
     if (localStorage.getItem('theme') === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
     function rsz() {

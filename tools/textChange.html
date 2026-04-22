@@ -3,18 +3,14 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.11.3/jquery.min.js	"></script>
-
-<!-- <link rel="stylesheet" type="text/css" href="css/normalize.css" /> -->
-<link rel="stylesheet" type="text/css" href="../fonts/css/all.css" />
+<script src="../js/jquery-3.3.1.min.js"></script>
+<script src="../js/main.js"></script>
 <link rel="stylesheet" href="../css/root.css">
-
-<title>CSS Unit Converter Tool</title>
+<link rel="stylesheet" href="../fonts/css/all.css">
+<title>字體單位換算 - 工具箱</title>
 
 <style>
 :root{
-  --accent:#ee9b00;
-  --text:#ffffff;
   --sub:#aaaaaa;
 }
 
@@ -28,14 +24,16 @@ body{
   margin:0;
   background:var(--bg);
   font-family: "Segoe UI", system-ui, sans-serif;
-  color:var(--text);
+  color:var(--text-main);
   padding: 40px 20px;
   font-size: 16px;
 }
 
-main{
+main.container{
   max-width:1000px;
   margin:auto;
+  text-align: left;
+  min-height:calc(95vh - 80px);
 }
 
 h1{
@@ -63,6 +61,7 @@ p{
   display: grid;
   grid-template-columns: 1fr;
   grid-gap: 1em;
+  width: 100%;
 }
 
 .card_cont{
@@ -97,7 +96,9 @@ input{
   font-size:1rem;
 }
 
-input[disabled]{color: #FFFFFF;}
+input{background: var(--inputBg);}
+
+input[disabled]{color: var(--text-main); background: var(--resultBg);}
 
 .result{
   font-size:1em;
@@ -107,11 +108,11 @@ input[disabled]{color: #FFFFFF;}
 .result h4{margin-top: 0; margin-bottom: .5em;}
 
 .result>div{
-  background: rgba(255,255,255,.2);
+  background: var(--resultBg);
   padding: 1em;
   border-radius: 10px;
   height: calc(100% - 2.3em);
-  color:#FFFFFF;
+  color:var(--text-main);
 }
 
 .result span{
@@ -157,9 +158,8 @@ footer{
 
 <body>
   
-<div class="theme-toggle" id="themeBtn"><i class="fa-solid fa-circle-half-stroke"></i> 模式切換</div>
 <div class="wrapper">
-  <main>
+  <main class="container">
     <h1>CSS Unit Converter Tool</h1>
 
     <div class="card fontSize">
@@ -217,24 +217,10 @@ footer{
         <div id="result_hypo"></div>
       </div>
     </div>
-
-    <footer>
-      Built for Front-End Workflow
-    </footer>
     
   </main>
 </div>
 
-<script>
-    const html = document.documentElement;
-    const themeBtn = document.getElementById('themeBtn');
-    if (localStorage.getItem('theme') === 'dark') html.setAttribute('data-theme', 'dark');
-    themeBtn.onclick = () => {
-        const isDark = html.getAttribute('data-theme') === 'dark';
-        isDark ? html.removeAttribute('data-theme') : html.setAttribute('data-theme', 'dark');
-        localStorage.setItem('theme', isDark ? 'light' : 'dark');
-    };
-</script>
 
 <script>
 const pxInput = document.getElementById('px');

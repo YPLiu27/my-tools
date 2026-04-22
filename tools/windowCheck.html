@@ -1,92 +1,35 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.11.3/jquery.min.js	"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>字體預覽工具 - 工具箱</title>
+<script src="../js/jquery-3.3.1.min.js"></script>
+<script src="../js/main.js"></script>
 
-<!-- <link rel="stylesheet" type="text/css" href="css/normalize.css" /> -->
-<link rel="stylesheet" type="text/css" href="http://work.ykqk.idv.tw/fonts/css/all.css" />
+<link rel="stylesheet" type="text/css" href="css/normalize.css" />
+<link rel="stylesheet" href="../fonts/css/all.css">
+<link rel="stylesheet" href="../css/root.css">
 
 <title>CSS Unit Converter Tool</title>
 </head>
 
 <body>
 <style>
-:root {
-  --bg: #043336;
-  --card: #04585e;
-  --accent: #ee9b00;
-  --text: #ffffff;
-  --textD: #444444;
-  --sub: #aaaaaa;
-}
 
 * {
   box-sizing: border-box;
 
 }
-
-html {
-  font-size: 16px;
-}
-
-body,
-p,
-ul {
-  margin: 0;
-  padding: 0;
-}
-
-a {
-  text-decoration: none;
-  color: inherit;
-}
-
-table {
-  border-collapse: collapse;
-  border-spacing: 0;
-}
-
-td,
-th {
-  padding: 0;
-}
-
-ul,
-ol,
-li {
-  list-style: none;
-}
-
-a {
-  text-decoration: none;
-  color: inherit;
-}
-
-em {
-  font-style: normal;
-}
-
-dl,
-dt,
-dd,
-figure {
-  margin: 0;
-}
-
-img {
-  display: block;
-}
-
 /* Edit */
 
 body {
   margin: 0;
   background: var(--bg);
   font-family: "Segoe UI", system-ui, sans-serif;
-  color: var(--text);
+  color: var(--text-main);
   font-size: 16px;
+  padding: 40px 0;
 }
 
 .cen_1600 {
@@ -172,20 +115,18 @@ body {
 
 .all_box {
   width: 100%;
-  min-height: 100vh;
+  min-height: calc(90vh - 80px);
   /* position: fixed; */
   left: 0;
   top: 0;
   line-height: 2;
   text-align: center;
-  padding: 40px 20px;
+  padding: 0 20px;
 }
 
 .all_box main {
-  display: grid;
-  grid-template-columns: 1fr;
-  grid-gap: 2em;
   max-width: 800px;
+  min-height: unset;
 }
 
 .all_box h1{
@@ -203,9 +144,10 @@ body {
 }
 
 .card {
-  background: var(--card);
+  background: var(--card-bg);
   border-radius: 16px;
   padding: 30px;
+  border: 0;
   box-shadow: 0 20px 40px rgba(0, 0, 0, .4);
 }
 
@@ -227,8 +169,8 @@ body {
 
 .card input,
 .card textarea {
-  background: #FFFFFF;
-  color: var(--textD);
+  background: var(--inputBg);
+  color: var(--text-mainD);
   border: 1px solid var(--sub);
   padding: .3rem .5rem;
   max-width: 100%;
@@ -266,6 +208,7 @@ body {
 .fontSize_tool {
   width: 100%;
   border-radius: 1em;
+  margin-top: 30px;
   overflow: hidden;
 }
 
@@ -312,9 +255,9 @@ footer {
   /*螢幕寬度小於1440px時-螢幕*/
 }
 
-@media (max-width:750px) {
+@media (max-width:768px) {
 
-  /*螢幕寬度小於950px時-平板*/
+  .all_box{padding-top: 30px;}
   .all_box main {
     grid-template-columns: 1fr;
     max-width: 500px;
@@ -353,8 +296,8 @@ footer {
 }
 </style>
 <div class="all_box edit_flex_col">
-  <h1>Customer Preview Tool</h1>
-  <main class="cen_1200">
+  <main class="cen_1200 container">
+    <h1>Customer Preview Tool</h1>
     <div class="card checkMedia">
       <h3 class="edit_flex_col">目前瀏覽器為<b><input type="text" id="browser" disabled></input></b></h3>
       <h3 class="edit_flex_col">螢幕解析度<b><input type="text" id="resolution" disabled></input></b></h3>
@@ -376,10 +319,7 @@ footer {
       </div>
     </div>
   </main>
-
-  <footer>
-    Built for Front-End Workflow
-  </footer>
+  
 </div><!--all_box-->
 <script>
   const userAgent = navigator.userAgent;
