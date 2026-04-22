@@ -1,19 +1,24 @@
 :root {
-  --bg: #f4f4f9;
-  --card-bg: #ffffff;
-  --text-main: #333;
-  --border: #ddd;
-  --primary: #2695a3;
-  --drop-bg: #fafafa;
-}
-
-[data-theme="dark"] {
   --bg: #043336;
   --card-bg: #04585e;
   --text-main: #e0e0e0;
+  --text-mainD: #444444;
   --border: #333;
-  /* --primary: #60dcec; */
   --drop-bg: #002f33;
+  --inputBg: #FFFFFF;
+  --primary: #2695a3;
+  --accent: #ee9b00;
+  --resultBg:rgba(255,255,255,.2);
+}
+
+[data-theme="bright"] {
+  --bg: #eeeeee;
+  --card-bg: #ffffff;
+  --text-main: #333;
+  --border: #ddd;
+  --drop-bg: #fafafa;
+  --inputBg: #eeeeee;
+  --resultBg:rgba(0,0,0,.02);
 }
 
 * {
@@ -21,13 +26,67 @@
   max-width: 100%;
 }
 
+
+html {
+  font-size: 16px;
+}
+
+body,
+p,
+ul {
+  margin: 0;
+  padding: 0;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+table {
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
+td,
+th {
+  padding: 0;
+}
+
+ul,
+ol,
+li {
+  list-style: none;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+em {
+  font-style: normal;
+}
+
+dl,
+dt,
+dd,
+figure {
+  margin: 0;
+}
+
+img {
+  display: block;
+}
+
+
 body {
   font-family: system-ui, sans-serif;
   background: var(--bg);
   color: var(--text-main);
   transition: 0.3s;
   margin: 0;
-  padding: 40px 20px;
+  padding: 0 20px;
 }
 
 
@@ -52,4 +111,50 @@ button {
   font-weight: bold;
   cursor: pointer;
   transition: 0.2s;
+}
+
+.container {
+  max-width: 500px;
+  margin: 0 auto;
+  text-align: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  transition: 0.3s;
+  flex-direction: column;
+}
+
+.back-link {
+  display: block;
+  margin-bottom: 20px;
+  color: var(--primary);
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.card {
+  background: var(--card-bg);
+  padding: 30px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.card + .back-link{
+  margin: 0 auto;
+  margin-top: 20px;
+  width: fit-content;
+}
+
+
+@media (max-width:769px) {
+  body{
+    padding-top: 50px;
+    padding-bottom: 50px;
+  }
+
+  .container{
+    min-height: 80vh;
+  }
 }
