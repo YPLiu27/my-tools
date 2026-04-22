@@ -4,14 +4,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="js/jquery-3.3.1.min.js"></script>
+  <script src="js/main.js"></script>
   <link rel="stylesheet" href="fonts/css/all.css">
   <link rel="stylesheet" href="css/root.css">
   <title>全能工具箱 - 導航首頁</title>
   <style>
     .container {
       max-width: 900px;
-      margin: 0 auto;
-      text-align: center;
     }
 
     .theme-toggle {
@@ -26,6 +26,7 @@
     }
 
     .tool-grid {
+      width: 100%;
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
       gap: 20px;
@@ -79,12 +80,16 @@
       font-size: 14px;
       color: #888;
     }
+
+    @media (max-width:768px) {
+      .tool-link{display: grid; grid-template-columns: 70px 1fr;}
+      .tool-card .icon{grid-row: 1 / span 2; display: flex; justify-content: center; align-items: center; align-content: center; margin: 0;}
+    }
   </style>
 </head>
 
-<body>
+<body class="indexPage">
 
-  <div class="theme-toggle" id="themeBtn"><i class="fa-solid fa-circle-half-stroke"></i> 模式切換</div>
 
   <div class="container">
     <h1>全能工具箱</h1>
@@ -99,7 +104,7 @@
         </a>
       </div>
       <div class="tool-card">
-        <a href="tools/password.html" class="tool-link">
+        <a href="tools/imgResize.html" class="tool-link">
           <span class="icon"><i class="fa-solid fa-image"></i></span>
           <h3>圖片尺寸調整</h3>
           <p>自定義長度與複雜度，離線生成安全隨機密碼。</p>
@@ -115,7 +120,7 @@
       <div class="tool-card">
         <a href="tools/windowCheck.html" class="tool-link">
           <span class="icon"><i class="fa-solid fa-font"></i></span>
-          <h3>字體預覽</h3>
+          <h3>字體預覽工具</h3>
           <p>自由設定字體大小行高，檢視目前瀏覽器呈現狀態</p>
         </a>
       </div>
@@ -134,17 +139,6 @@
       </div>
     </div>
   </div>
-
-  <script>
-    const html = document.documentElement;
-    const themeBtn = document.getElementById('themeBtn');
-    if (localStorage.getItem('theme') === 'dark') html.setAttribute('data-theme', 'dark');
-    themeBtn.onclick = () => {
-      const isDark = html.getAttribute('data-theme') === 'dark';
-      isDark ? html.removeAttribute('data-theme') : html.setAttribute('data-theme', 'dark');
-      localStorage.setItem('theme', isDark ? 'light' : 'dark');
-    };
-  </script>
 </body>
 
 </html>
