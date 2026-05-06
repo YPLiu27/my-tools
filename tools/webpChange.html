@@ -142,102 +142,117 @@
 
 <body>
 
-  <div class="container">
-    <h2 style="margin-top: 0; margin-left: 0; margin-right: 0;">萬用圖片轉 WebP</h2>
-    <p style="font-size: 14px; color: #888; margin-bottom: 20px;">支援 PNG, JPG, HEIC 轉 WebP</p>
-    <div class="card">
-      <div id="drop-zone">
-        <p>拖曳圖片至此，或點擊選擇</p>
-        <p style="font-size: 12px; color: var(--text-dim); margin-top: 5px;">(支援 iPhone HEIC 格式)</p>
-        <input type="file" id="fileInput" multiple accept="image/*,.heic,.HEIC" style="display: none;">
-      </div>
-
-      <div class="controls">
-        <label style="font-size: 14px;">品質</label>
-        <input type="range" id="quality" min="0.1" max="1.0" step="0.1" value="0.8">
-        <span id="qualityValue">80%</span>
-      </div>
-
-      <div class="file-list" id="fileList"></div>
-      <button id="convertBtn" disabled>開始轉檔並下載 ZIP</button>
-      <canvas id="canvas" style="display: none;"></canvas>
+<div class="container">
+  <h2 style="margin-top: 0; margin-left: 0; margin-right: 0;">萬用圖片轉 WebP</h2>
+  <p style="font-size: 14px; color: #888; margin-bottom: 20px;">支援 PNG, JPG, HEIC 轉 WebP</p>
+  <div class="card">
+    <div id="drop-zone">
+      <p>拖曳圖片至此，或點擊選擇</p>
+      <p style="font-size: 12px; color: var(--text-dim); margin-top: 5px;">(支援 iPhone HEIC 格式)</p>
+      <input type="file" id="fileInput" multiple accept="image/*,.heic,.HEIC" style="display: none;">
     </div>
+
+    <div class="controls">
+      <label style="font-size: 14px;">品質</label>
+      <input type="range" id="quality" min="0.1" max="1.0" step="0.01" value="0.85">
+      <span id="qualityValue">80%</span>
+    </div>
+
+    <div class="file-list" id="fileList"></div>
+    <button id="convertBtn" disabled>開始轉檔並下載 ZIP</button>
+    <canvas id="canvas" style="display: none;"></canvas>
   </div>
+</div>
 
-  <script>
-    // --- 轉檔邏輯 ---
-    const fileInput = document.getElementById('fileInput');
-    const dropZone = document.getElementById('drop-zone');
-    const fileList = document.getElementById('fileList');
-    const convertBtn = document.getElementById('convertBtn');
-    const canvas = document.getElementById('canvas');
-    const ctx = canvas.getContext('2d');
+<script>
+  // --- 轉檔邏輯 ---
+  const fileInput = document.getElementById('fileInput');
+  const dropZone = document.getElementById('drop-zone');
+  const fileList = document.getElementById('fileList');
+  const convertBtn = document.getElementById('convertBtn');
+  const canvas = document.getElementById('canvas');
+  const ctx = canvas.getContext('2d');
 
-    let selectedFiles = [];
+  let selectedFiles = [];
 
-    dropZone.onclick = () => fileInput.click();
-    fileInput.onchange = (e) => handleFiles(e.target.files);
-    dropZone.ondragover = (e) => { e.preventDefault(); dropZone.classList.add('hover'); };
-    dropZone.ondragleave = () => dropZone.classList.remove('hover');
-    dropZone.ondrop = (e) => { e.preventDefault(); dropZone.classList.remove('hover'); handleFiles(e.dataTransfer.files); };
+  dropZone.onclick = () => fileInput.click();
+  fileInput.onchange = (e) => handleFiles(e.target.files);
+  dropZone.ondragover = (e) => { e.preventDefault(); dropZone.classList.add('hover'); };
+  dropZone.ondragleave = () => dropZone.classList.remove('hover');
+  dropZone.ondrop = (e) => { e.preventDefault(); dropZone.classList.remove('hover'); handleFiles(e.dataTransfer.files); };
 
-    function handleFiles(files) {
-      selectedFiles = Array.from(files);
-      if (selectedFiles.length > 0) {
-        fileList.innerHTML = selectedFiles.map(f => {
-          const isHeic = f.name.toLowerCase().endsWith('.heic');
-          return `<div class="file-item">
-                    <span>${f.name}</span>
-                    <span class="status-tag ${isHeic ? 'heic-tag' : ''}">${isHeic ? 'HEIC 待轉換' : '待處理'}</span>
-                </div>`;
-        }).join('');
-        fileList.style.display = 'block';
-        convertBtn.disabled = false;
-      }
+  function handleFiles(files) {
+    selectedFiles = Array.from(files);
+    if (selectedFiles.length > 0) {
+      fileList.innerHTML = selectedFiles.map(f => {
+        const isHeic = f.name.toLowerCase().endsWith('.heic');
+        return `<div class="file-item">
+                  <span>${f.name}</span>
+                  <span class="status-tag ${isHeic ? 'heic-tag' : ''}">${isHeic ? 'HEIC 待轉換' : '待處理'}</span>
+              </div>`;
+      }).join('');
+      fileList.style.display = 'block';
+      convertBtn.disabled = false;
+    }
+  }
+
+  convertBtn.onclick = async () => {
+    convertBtn.innerText = '正在處理 (HEIC 可能較慢)...';
+    convertBtn.disabled = true;
+    const zip = new JSZip();
+    const quality = parseFloat(document.getElementById('quality').value);
+
+    for (let file of selectedFiles) {
+        try {
+            let imageSource;
+            // 1. HEIC 預處理
+            if (file.name.toLowerCase().endsWith('.heic')) {
+                // heic2any 轉為 jpeg 時建議品質給高一點，避免第一次轉檔就失真
+                const convertedBlob = await heic2any({ blob: file, toType: "image/jpeg", quality: 0.95 });
+                imageSource = Array.isArray(convertedBlob) ? convertedBlob[0] : convertedBlob;
+            } else {
+                imageSource = file;
+            }
+
+            // 2. 轉為 ImageBitmap (這比 new Image() 快且能減少記憶體消耗)
+            const img = await createImageBitmap(imageSource);
+            
+            // 3. 畫布設定
+            canvas.width = img.width;
+            canvas.height = img.height;
+
+            // 4. 清除畫布並設定高品質縮放
+            ctx.clearRect(0, 0, canvas.width, canvas.height); 
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'high';
+
+            // 5. 【修正重點】只畫一次，並確保完整覆蓋畫布
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+            // 6. 輸出 WebP
+            // 注意：若來源是 PNG 且有透明度，品質參數對透明區域影響較小，但對色彩區域影響很大
+            const webpBlob = await new Promise(res => canvas.toBlob(res, 'image/webp', quality));
+            
+            const newName = file.name.replace(/\.[^/.]+$/, "") + ".webp";
+            zip.file(newName, webpBlob);
+
+            // 釋放記憶體
+            img.close(); 
+        } catch (err) {
+            console.error("檔案處理失敗:", file.name, err);
+        }
     }
 
-    convertBtn.onclick = async () => {
-      convertBtn.innerText = '正在處理 (HEIC 可能較慢)...';
-      convertBtn.disabled = true;
-      const zip = new JSZip();
-      const quality = parseFloat(document.getElementById('quality').value);
+    const content = await zip.generateAsync({ type: "blob" });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(content);
+    link.download = "webp_images_collection.zip";
+    link.click();
 
-      for (let file of selectedFiles) {
-        try {
-          let imageSource;
-          // 檢查是否為 HEIC
-          if (file.name.toLowerCase().endsWith('.heic')) {
-            const convertedBlob = await heic2any({ blob: file, toType: "image/jpeg", quality: 0.8 });
-            // heic2any 可能回傳陣列，取第一個
-            imageSource = Array.isArray(convertedBlob) ? convertedBlob[0] : convertedBlob;
-          } else {
-            imageSource = file;
-          }
-
-          // 轉為 ImageBitmap
-          const img = await createImageBitmap(imageSource);
-          canvas.width = img.width;
-          canvas.height = img.height;
-          ctx.drawImage(img, 0, 0);
-
-          const webpBlob = await new Promise(res => canvas.toBlob(res, 'image/webp', quality));
-          const newName = file.name.replace(/\.[^/.]+$/, "") + ".webp";
-          zip.file(newName, webpBlob);
-        } catch (err) {
-          console.error("檔案處理失敗:", file.name, err);
-        }
-      }
-
-      const content = await zip.generateAsync({ type: "blob" });
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(content);
-      link.download = "webp_images_collection.zip";
-      link.click();
-
-      convertBtn.innerText = '開始轉檔並下載 ZIP';
-      convertBtn.disabled = false;
-    };
-  </script>
+    convertBtn.innerText = '開始轉檔並下載 ZIP';
+    convertBtn.disabled = false;
+  };
+</script>
 </body>
 
 </html>
