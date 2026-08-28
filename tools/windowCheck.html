@@ -1,11 +1,16 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
+
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>字體預覽工具 - 工具箱</title>
 <script src="../js/jquery-3.3.1.min.js"></script>
 <script src="../js/main.js"></script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Carrois+Gothic&family=Google+Sans+Flex:opsz,wght@6..144,1..1000&family=Noto+Sans+TC:wght@100..900&family=Zen+Kaku+Gothic+New&display=swap" rel="stylesheet">
 
 <link rel="stylesheet" type="text/css" href="css/normalize.css" />
 <link rel="stylesheet" href="../fonts/css/all.css">
@@ -15,352 +20,601 @@
 </head>
 
 <body>
-<style>
+  <style>
+    :root{
+      --ffCarrois: "Carrois Gothic", sans-serif;
+      --ffNotoSans: "Noto Sans TC", sans-serif;
+      --ffGoogleSans: "Google Sans Flex", sans-serif;
+      --ffZenKaku: "Zen Kaku Gothic New", sans-serif;
+    }
 
-* {
-  box-sizing: border-box;
+    * {
+      box-sizing: border-box;
 
-}
-/* Edit */
+    }
 
-body {
-  margin: 0;
-  background: var(--bg);
-  font-family: "Segoe UI", system-ui, sans-serif;
-  color: var(--text-main);
-  font-size: 16px;
-  padding: 40px 0;
-}
+    /* Edit */
 
-.cen_1600 {
-  max-width: 1600px;
-  margin: 0 auto;
-  width: 100%;
-}
+    body {
+      margin: 0;
+      background: var(--bg);
+      font-family: "Carrois Gothic", "Zen Kaku Gothic New", system-ui, sans-serif;
+      color: var(--text-main);
+      font-size: 16px;
+      padding: 40px 0;
+    }
 
-.cen_1400 {
-  max-width: 1400px;
-  margin: 0 auto;
-  width: 100%;
-}
+    .cen_1600 {
+      max-width: 1600px;
+      margin: 0 auto;
+      width: 100%;
+    }
 
-.cen_1200 {
-  max-width: 1200px;
-  margin: 0 auto;
-  width: 100%;
-}
+    .cen_1400 {
+      max-width: 1400px;
+      margin: 0 auto;
+      width: 100%;
+    }
 
-.cen_1000 {
-  max-width: 1000px;
-  margin: 0 auto;
-  width: 100%;
-}
+    .cen_1200 {
+      max-width: 1200px;
+      margin: 0 auto;
+      width: 100%;
+    }
 
-.cen_960 {
-  max-width: 960px;
-  margin: 0 auto;
-  width: 100%;
-}
+    .cen_1000 {
+      max-width: 1000px;
+      margin: 0 auto;
+      width: 100%;
+    }
 
-.edit_flex {
-  display: flex;
-  flex-flow: row wrap;
-  justify-content: center;
-  align-items: center;
-  align-content: center;
-}
+    .cen_960 {
+      max-width: 960px;
+      margin: 0 auto;
+      width: 100%;
+    }
 
-.edit_flex_col {
-  display: flex;
-  flex-flow: column;
-  justify-content: center;
-  align-items: center;
-  align-content: center;
-}
+    .edit_flex {
+      display: flex;
+      flex-flow: row wrap;
+      justify-content: center;
+      align-items: center;
+      align-content: center;
+    }
 
-.edit_flex_jBet {
-  justify-content: space-between;
-}
+    .edit_flex_col {
+      display: flex;
+      flex-flow: column;
+      justify-content: center;
+      align-items: center;
+      align-content: center;
+    }
 
-.edit_flex_jStar {
-  justify-content: flex-start;
-}
+    .edit_flex_jBet {
+      justify-content: space-between;
+    }
 
-.edit_flex_jEnd {
-  justify-content: flex-end;
-}
+    .edit_flex_jStar {
+      justify-content: flex-start;
+    }
 
-.edit_flex_aStar {
-  align-items: flex-start;
-  align-content: flex-start;
-}
+    .edit_flex_jEnd {
+      justify-content: flex-end;
+    }
 
-.edit_flex_aEnd {
-  align-items: flex-end;
-  align-content: flex-end;
-}
+    .edit_flex_aStar {
+      align-items: flex-start;
+      align-content: flex-start;
+    }
 
-.edit_flex_aStretch {
-  align-items: stretch;
-  align-content: stretch;
-}
+    .edit_flex_aEnd {
+      align-items: flex-end;
+      align-content: flex-end;
+    }
 
-.edit_flex_rowRe {
-  flex-direction: row-reverse;
-}
+    .edit_flex_aStretch {
+      align-items: stretch;
+      align-content: stretch;
+    }
 
-.clear {
-  clear: both;
-}
+    .edit_flex_rowRe {
+      flex-direction: row-reverse;
+    }
 
-.all_box {
-  width: 100%;
-  min-height: calc(90vh - 80px);
-  /* position: fixed; */
-  left: 0;
-  top: 0;
-  line-height: 2;
-  text-align: center;
-  padding: 0 20px;
-}
+    .clear {
+      clear: both;
+    }
 
-.all_box main {
-  max-width: 800px;
-  min-height: unset;
-}
+    .all_box {
+      width: 100%;
+      min-height: calc(90vh - 80px);
+      /* position: fixed; */
+      left: 0;
+      top: 0;
+      line-height: 2;
+      text-align: center;
+      padding: 0 20px;
+    }
 
-.all_box h1{
-  font-size:1.75rem;
-  margin: 0;
-  margin-bottom:30px;
-  letter-spacing:1px;
-}
+    .all_box main {
+      max-width: 800px;
+      min-height: unset;
+    }
 
-.all_box h2 {
-  margin-bottom: 2rem;
-  font-size: 1.25em;
-  color: var(--accent);
-  letter-spacing: 1px;
-}
+    .all_box h1 {
+      font-size: 1.75rem;
+      margin: 0;
+      margin-bottom: 30px;
+      letter-spacing: 1px;
+    }
 
-.card {
-  background: var(--card-bg);
-  border-radius: 16px;
-  padding: 30px;
-  border: 0;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, .4);
-}
+    .all_box h2 {
+      margin-bottom: 2rem;
+      font-size: 1.25em;
+      color: var(--accent);
+      letter-spacing: 1px;
+    }
 
-.card h3 {
-  line-height: 1.5;
-  font-weight: normal;
-  font-weight: bold;
-  letter-spacing: .1em;
-}
+    .card {
+      background: var(--card-bg);
+      border-radius: 16px;
+      padding: 30px;
+      border: 0;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, .4);
+    }
 
-.card h3 b {
-  margin-top: .5em;
-}
+    .card h3 {
+      line-height: 1.5;
+      font-weight: normal;
+      font-weight: bold;
+      letter-spacing: .1em;
+      margin: 0;
+    }
 
-.card h5 {
-  font-size: 1.2em;
-  letter-spacing: .1em;
-}
+    .card h3 b {
+      margin-top: .5em;
+    }
 
-.card input,
-.card textarea {
-  background: var(--inputBg);
-  color: var(--text-mainD);
-  border: 1px solid var(--sub);
-  padding: .3rem .5rem;
-  max-width: 100%;
-  width: 100%;
-  border-radius: .5rem;
-  border: 0;
-}
+    .card h5 {
+      font-size: 1.2em;
+      letter-spacing: .1em;
+    }
 
-.card input {
-  text-align: center;
-  font-weight: normal;
-  font-size: 1rem;
-}
+    .card input,
+    .card textarea {
+      background: var(--inputBg);
+      color: var(--text-mainD);
+      border: 1px solid var(--sub);
+      padding: .3rem .5rem;
+      max-width: 100%;
+      width: 100%;
+      border-radius: .5rem;
+      border: 0;
+      font-weight: 300;
+      font-family: inherit;
+    }
 
-.card input[disabled]{
-  background: rgba(255,255,255,.2);
-  color: inherit;
-}
+    .card input {
+      text-align: center;
+      font-weight: normal;
+      font-size: 1rem;
+    }
 
-.checkMedia {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  grid-gap: 30px;
-}
+    @media (min-width:769px) {
+      .card input[type=number]{
+        padding-right: 0;
+      }
+    }
 
-.checkMedia input{
-  font-size: 1.8em;
-  font-weight: 600;
-}
+    .card input[disabled] {
+      background: rgba(255, 255, 255, .2);
+      color: inherit;
+    }
 
-.checkMedia h3 b{
-  margin-top: 1em;
-}
+    .checkMedia {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      grid-gap: min(20px, 4vw);
+    }
 
-.fontSize_tool {
-  width: 100%;
-  border-radius: 1em;
-  margin-top: 30px;
-  overflow: hidden;
-}
+    .checkMedia input {
+      font-size: min(1.4em,5vw);
+      padding: .3rem 1rem;
+    }
 
-.fontSize_tool .text {
-  margin-top: 1em;
-  height: 100%;
-  max-height: calc(100% - 2.17rem);
-}
+    .checkMedia h3#viewportBox {
+      grid-column: span 2;
+    }
 
-.fontSize_tool .text p {
-  margin-bottom: 1em;
-}
+    .checkMedia h3 span{
+      font-family: var(--ffNotoSans);
+    }
 
-.fontSize_tool textarea {
-  width: 100%;
-  display: block;
-  min-height: 10em;
-}
+    .checkMedia h3 b {
+      margin-top: min(.5em,2vw);
+      display: block;
+      width: 100%;
+    }
 
-.fontSize_tool .text p input {
-  width: auto;
-  max-width: 4em;
-}
+    .checkMedia h3#viewportBox b{
+      width: 100%;
+      background: transparent;
+      margin-top: 0;
+    }
 
-.text_set {
-  display: flex;
-  justify-content: center;
-}
+    .checkMedia h3#viewportBox input[disabled]{
+      background: transparent;
+      font-family: var(--ffGoogleSans);
+      font-weight: 600;
+      font-size: min(5em,9vw);
+      letter-spacing: min(.1em,1vw);
+    }
 
-.text_set p {
-  padding: 0 .5em;
-}
+    .fontSize_tool {
+      width: 100%;
+      border-radius: 1em;
+      margin-top: 30px;
+      overflow: hidden;
+    }
 
-footer {
-  text-align: center;
-  font-size: 13px;
-  color: var(--sub);
-  margin-top: 2rem;
+    .fontSize_tool .text {
+      margin-top: 1em;
+      height: 100%;
+      max-height: calc(100% - 2.17rem);
+    }
 
-}
+    .fontSize_tool .text p {
+      margin-bottom: 1em;
+    }
+
+    .fontSize_tool textarea {
+      width: 100%;
+      display: block;
+      min-height: 10em;
+      font-family: "微軟正黑體", Arial, Helvetica, sans-serif;
+      font-weight: normal;
+    }
+
+    .fontSize_tool .text p input {
+      width: auto;
+      max-width: 4em;
+    }
+
+    .text_set {
+      display: flex;
+      justify-content: center;
+    }
+
+    .text_set p {
+      padding: 0 .5em;
+    }
+
+    footer {
+      text-align: center;
+      font-size: 13px;
+      color: var(--sub);
+      margin-top: 2rem;
+
+    }
 
 
-@media (max-width:1440px) {
-  /*螢幕寬度小於1440px時-螢幕*/
-}
+    @media (max-width:1440px) {
+      /*螢幕寬度小於1440px時-螢幕*/
+    }
 
-@media (max-width:768px) {
+    @media (max-width:768px) {
 
-  .all_box{padding-top: 30px;}
-  .all_box main {
-    grid-template-columns: 1fr;
-    max-width: 500px;
-  }
-  .checkMedia{
-    grid-template-columns: 1fr;
-    grid-gap: 30px;
-  }
-  .fontSize_tool textarea {
-    height: auto;
-    max-height: unset;
-  }
-}
+      .all_box {
+        padding-top: 30px;
+      }
 
-@media (max-width:750px) {
+      .all_box main {
+        grid-template-columns: 1fr;
+        max-width: 500px;
+      }
+    
+      .checkMedia h3#browserBox, 
+      .checkMedia h3#resolutionBox {
+        grid-column: span 2;
+      }
 
-}
+      .fontSize_tool textarea {
+        height: auto;
+        max-height: unset;
+      }
+    }
+
+    @media (max-width:750px) {}
 
 
-@media (max-width:450px) {
-  html, body {
-    font-size: 14px;
-  }
-  .all_box h1{
-    font-size: 1.5rem;
-  }
-  .card{
-    padding: 1em;
-  }
-}
+    @media (max-width:450px) {
 
-@media (max-width:340px) {
-  .text_set {
-    display: block;
-  }
-}
-</style>
-<div class="all_box edit_flex_col">
-  <main class="cen_1200 container">
-    <h1>Customer Preview Tool</h1>
-    <div class="card checkMedia">
-      <h3 class="edit_flex_col">目前瀏覽器為<b><input type="text" id="browser" disabled></input></b></h3>
-      <h3 class="edit_flex_col">螢幕解析度<b><input type="text" id="resolution" disabled></input></b></h3>
-    </div>
-    <div class="card fontSize_tool">
-      <h3>字體呈現參考</h3>
-      <div class="text">
-        <div class="text_set">
-          <p>
-            字體
-            <input type="number" min="10" max="100" id="fontSizeInput" value="16" oninput="if(value.length>3)value=value.slice(0,3);"> px
-          </p>
-          <p>
-            行高
-            <input type="number" min="1" max="3" id="lineHeight" value="1.8" step="0.1" oninput="if(this.value > 3) this.value = 3;"> 倍
-          </p>
-        </div>
-        <textarea id="textShow" placeholder="請輸入參考文字..."></textarea>
+      html,
+      body {
+        font-size: 14px;
+      }
+
+      .all_box h1 {
+        font-size: 1.5rem;
+      }
+
+      .card {
+        padding: 1em;
+      }
+    }
+
+    @media (max-width:340px) {
+      .text_set {
+        display: block;
+      }
+    }
+  </style>
+  <div class="all_box edit_flex_col">
+    <main class="cen_1200 container">
+      <h1>Customer Preview Tool</h1>
+      <div class="card checkMedia">
+        <h3 class="edit_flex_col" id="viewportBox"><span>瀏覽器可視範圍</span><b><input type="text" id="viewport" disabled></b></h3>
+        <h3 class="edit_flex_col" id="browserBox"><span>目前瀏覽器</span><b><input type="text" id="browser" disabled></b></h3>
+        <h3 class="edit_flex_col" id="resolutionBox"><span>螢幕解析度</span><b><input type="text" id="resolution" disabled></b></h3>
+        <h3 class="edit_flex_col"><span>裝置像素比例</span><b><input type="text" id="pixelRatio" disabled></b></h3>
+        <h3 class="edit_flex_col"><span>螢幕方向</span><b><input type="text" id="orientation" disabled></b></h3>
       </div>
-    </div>
-  </main>
-  
-</div><!--all_box-->
-<script>
-  const userAgent = navigator.userAgent;
-  let browser = "Unknown";
+      <div class="card fontSize_tool">
+        <h3>字體呈現參考</h3>
+        <div class="text">
+          <div class="text_set">
+            <p>
+              字體
+              <input type="number" min="10" max="100" id="fontSizeInput" value="16"
+                oninput="if(value.length>3)value=value.slice(0,3);"> px
+            </p>
+            <p>
+              行高
+              <input type="number" min="1" max="3" id="lineHeight" value="1.8" step="0.1"
+                oninput="if(this.value > 3) this.value = 3;"> 倍
+            </p>
+          </div>
+          <textarea id="textShow" placeholder="請輸入參考文字..."></textarea>
+        </div>
+      </div>
+    </main>
 
-  if (userAgent.indexOf("Chrome") > -1 && userAgent.indexOf("Edg") === -1) {
-      browser = "Google Chrome";
-  } else if (userAgent.indexOf("Edg") > -1) {
-      browser = "Microsoft Edge";
-  } else if (userAgent.indexOf("Firefox") > -1) {
-      browser = "Mozilla Firefox";
-  } else if (userAgent.indexOf("Safari") > -1 && userAgent.indexOf("Chrome") === -1) {
-      browser = "Apple Safari";
-  }
-  let resolution = `${screen.width} x ${screen.height}`
+  </div><!--all_box-->
+  <script>
+    (function () {
+
+      /* ================================
+         Browser
+      ================================= */
+
+      function getBrowser() {
+        const ua = navigator.userAgent;
+
+        let name = "Unknown";
+        let version = "";
+
+        // Edge
+        let match = ua.match(/Edg\/([\d.]+)/);
+
+        if (match) {
+          name = "Microsoft Edge";
+          version = match[1];
+          return `${name} ${version}`;
+        }
+
+        // Opera
+        match = ua.match(/OPR\/([\d.]+)/);
+
+        if (match) {
+          name = "Opera";
+          version = match[1];
+          return `${name} ${version}`;
+        }
+
+        // Chrome iOS
+        match = ua.match(/CriOS\/([\d.]+)/);
+
+        if (match) {
+          name = "Google Chrome";
+          version = match[1];
+          return `${name} ${version}`;
+        }
+
+        // Firefox iOS
+        match = ua.match(/FxiOS\/([\d.]+)/);
+
+        if (match) {
+          name = "Mozilla Firefox";
+          version = match[1];
+          return `${name} ${version}`;
+        }
+
+        // Chrome
+        match = ua.match(/Chrome\/([\d.]+)/);
+
+        if (match) {
+          name = "Google Chrome";
+          version = match[1];
+          return `${name} ${version}`;
+        }
+
+        // Firefox
+        match = ua.match(/Firefox\/([\d.]+)/);
+
+        if (match) {
+          name = "Mozilla Firefox";
+          version = match[1];
+          return `${name} ${version}`;
+        }
+
+        // Safari
+        if (/Safari/.test(ua)) {
+          match = ua.match(/Version\/([\d.]+)/);
+
+          if (match) {
+            name = "Apple Safari";
+            version = match[1];
+            return `${name} ${version}`;
+          }
+        }
+
+        return name;
+      }
 
 
-  $('#browser').val(browser)
-  $('#resolution').val(resolution)
+      /* ================================
+         Viewport
+      ================================= */
 
-  const fontInput = document.getElementById("fontSizeInput");
-  const lineHeightInput = document.getElementById("lineHeight");
-  const textarea = document.getElementById("textShow");
+      function getViewport() {
 
-  // 預設 16px
-  textarea.style.fontSize = fontInput.value + "px";
-  textarea.style.lineHeight = lineHeightInput.value;
+        // visualViewport 對手機瀏覽器更準確
+        if (window.visualViewport) {
+          return {
+            width: Math.round(window.visualViewport.width),
+            height: Math.round(window.visualViewport.height)
+          };
+        }
 
-  // 即時改變字體大小及行高
-  fontInput.addEventListener("input", function(){
-    const size = this.value;
-    if(size && size > 0){
-      textarea.style.fontSize = size + "px";
-    }
-  });
-  lineHeightInput.addEventListener("input", function(){
-    const lineHeight = this.value;
-    if(lineHeight && lineHeight > 0){
-      textarea.style.lineHeight = lineHeight;
-    }
-  });
-</script>
+        return {
+          width: window.innerWidth || document.documentElement.clientWidth,
+          height: window.innerHeight || document.documentElement.clientHeight
+        };
+      }
+
+
+      /* ================================
+         Orientation
+      ================================= */
+
+      function getOrientation() {
+
+        if (window.matchMedia("(orientation: portrait)").matches) {
+          return "直向";
+        }
+
+        return "橫向";
+      }
+
+
+      /* ================================
+         更新裝置資訊
+      ================================= */
+
+      function updateDeviceInfo() {
+
+        const viewport = getViewport();
+
+        const resolution =
+          `${screen.width} × ${screen.height}`;
+
+        const viewportText =
+          `${viewport.width} × ${viewport.height}`;
+
+        const pixelRatio =
+          window.devicePixelRatio || 1;
+
+        const orientation =
+          getOrientation();
+
+
+        $("#browser").val(getBrowser());
+
+        $("#viewport").val(viewportText);
+
+        $("#resolution").val(resolution);
+
+        $("#pixelRatio").val(pixelRatio);
+
+        $("#orientation").val(orientation);
+      }
+
+
+      /* 第一次載入 */
+      updateDeviceInfo();
+
+
+      /* ================================
+         視窗變動
+      ================================= */
+
+      window.addEventListener("resize", updateDeviceInfo);
+
+      window.addEventListener(
+        "orientationchange",
+        updateDeviceInfo
+      );
+
+      // 手機瀏覽器網址列 / 工具列變化
+      if (window.visualViewport) {
+
+        window.visualViewport.addEventListener(
+          "resize",
+          updateDeviceInfo
+        );
+
+      }
+
+
+      /* ================================
+         Font Preview
+      ================================= */
+
+      const fontInput =
+        document.getElementById("fontSizeInput");
+
+      const lineHeightInput =
+        document.getElementById("lineHeight");
+
+      const textarea =
+        document.getElementById("textShow");
+
+
+      /* 預設值 */
+
+      textarea.style.fontSize =
+        fontInput.value + "px";
+
+      textarea.style.lineHeight =
+        lineHeightInput.value;
+
+
+      /* 字體大小 */
+
+      fontInput.addEventListener(
+        "input",
+        function () {
+
+          const size = this.value;
+
+          if (size && size > 0) {
+            textarea.style.fontSize =
+              size + "px";
+          }
+
+        }
+      );
+
+
+      /* 行高 */
+
+      lineHeightInput.addEventListener(
+        "input",
+        function () {
+
+          const lineHeight =
+            this.value;
+
+          if (lineHeight && lineHeight > 0) {
+            textarea.style.lineHeight =
+              lineHeight;
+          }
+
+        }
+      );
+
+    })();
+  </script>
 </body>
+
 </html>
