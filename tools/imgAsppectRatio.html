@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<script src="../js/jquery-3.3.1.min.js"></script>
+<script src="../js/main.js"></script>
+<link rel="stylesheet" href="../css/root.css">
+<link rel="stylesheet" href="../fonts/css/all.css">
+<title>圖片比例計算 - 工具箱</title>
+
+<style>
+*{box-sizing:border-box}
+
+html{ font-size: 16px; }
+
+body{
+  margin:0;
+  background:var(--bg);
+  font-family: "Segoe UI", system-ui, sans-serif;
+  color:var(--text-main);
+  padding: 40px 20px;
+  font-size: 16px;
+}
+
+main.container{
+  max-width:1000px;
+  margin:auto;
+  text-align: left;
+  min-height:calc(95vh - 80px);
+}
+
+h1{
+  font-size:1.75rem;
+  margin: 0 0 30px 0;
+  letter-spacing:1px;
+  text-align: center;
+}
+
+h3, h4{ margin: 0; }
+p{ margin: 0; }
+
+.card{
+  background:var(--card-bg);
+  border-radius:1em;
+  padding:30px;
+  box-shadow:0 20px 40px rgba(0,0,0,.4);
+  margin-bottom:30px;
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-gap: 1em;
+  width: 100%;
+}
+
+.card_cont{
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  grid-gap: 20px;
+}
+
+.set_box{
+  display:grid;
+  grid-template-columns:repeat(2, 1fr);
+  gap:20px;
+}
+
+.aspect_ratio .set_box>div.full-width{
+  grid-column: 1 / span 2;
+}
+
+label{
+  font-size:0.875em;
+  color:var(--sub);
+  display:block;
+  margin-bottom:6px;
+}
+
+input, select{
+  width:100%;
+  padding:10px 12px;
+  border-radius:8px;
+  border:none;
+  outline:none;
+  font-size:1rem;
+  background: var(--inputBg);
+  color: var(--text-mainD);
+}
+
+.result{
+  font-size:1em;
+  line-height:1.8;
+}
+
+.result h4{margin-top: 0; margin-bottom: .5em;}
+
+.result>div{
+  background: var(--resultBg);
+  padding: 1em;
+  border-radius: 10px;
+  height: calc(100% - 2.3em);
+  color:var(--text-main);
+}
+
+.result span{
+  color:var(--accent);
+  font-weight:bold;
+}
+
+.copyText{
+  margin-left: .5em;
+  cursor: pointer;
+}
+
+.copyText:hover{
+  opacity: 0.8;
+}
+
+/* 圖片預覽框樣式 */
+.preview_box {
+  margin-top: 15px;
+  width: 100%;
+  height: 120px;
+  background: rgba(0,0,0,0.2);
+  border: 1px dashed var(--sub);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.preview_rect {
+  background: var(--drop-bg);
+  opacity: 0.7;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+@media (max-width:1024px) {
+  .card_cont{grid-template-columns: 1fr;}
+  .result h4{margin-bottom: .5em;}
+}
+
+@media (max-width:600px) {
+  .card{padding: 1em;}
+  .set_box{grid-template-columns: 1fr;}
+  .aspect_ratio .set_box>div.full-width{grid-column: unset;}
+}
+
+@media (max-width:450px) {
+  html, body { font-size: 14px; }
+}
+</style>
+</head>
+
+<body>
+<div class="wrapper">
+  <main class="container">
+    <h1>Image Ratio Calculator</h1>
+
+    <!-- 卡片 1：圖片比例與尺寸換算 -->
+    <div class="card aspect_ratio">
+      <h3>圖片尺寸與比例換算</h3>
+      <div class="card_cont">
+        <div class="set_box">
+          <div class="full-width">
+            <label>常用比例預設</label>
+            <select id="preset_ratio">
+              <option value="custom">自訂比例</option>
+              <option value="16:9">16:9 (橫向影片/螢幕)</option>
+              <option value="4:3">4:3 (傳統螢幕/相機)</option>
+              <option value="1:1" selected>1:1 (正方形/IG貼文)</option>
+              <option value="9:16">9:16 (直向限動/Reels)</option>
+              <option value="21:9">21:9 (超寬螢幕)</option>
+            </select>
+          </div>
+          <div>
+            <label>原始寬度 (Width)</label>
+            <input type="number" id="orig_w" value="1080">
+          </div>
+          <div>
+            <label>原始高度 (Height)</label>
+            <input type="number" id="orig_h" value="1080">
+          </div>
+          <div class="full-width">
+            <label>新寬度 (指定後自動算高度)</label>
+            <input type="number" id="new_w" placeholder="輸入目標寬度...">
+          </div>
+          <div class="full-width">
+            <label>新高度 (指定後自動算寬度)</label>
+            <input type="number" id="new_h" placeholder="輸入目標高度...">
+          </div>
+        </div>
+
+        <div class="result">
+          <h4>分析與縮放結果</h4>
+          <div id="result_ratio">
+            <!-- 動態產生結果 -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+const origW = document.getElementById('orig_w');
+const origH = document.getElementById('orig_h');
+const newW = document.getElementById('new_w');
+const newH = document.getElementById('new_h');
+const presetSelect = document.getElementById('preset_ratio');
+const resultRatio = document.getElementById('result_ratio');
+
+// 計算最大公因數 (用於簡化比例)
+function gcd(a, b) {
+  return b === 0 ? a : gcd(b, a % b);
+}
+
+function round(num){
+  return Number(num.toFixed(2));
+}
+
+// 主計算邏輯
+function updateRatio(changedSource) {
+  let w = parseFloat(origW.value);
+  let h = parseFloat(origH.value);
+
+  if (isNaN(w) || isNaN(h) || w <= 0 || h <= 0) {
+    resultRatio.innerHTML = '<p>請輸入有效的寬度與高度</p>';
+    return;
+  }
+
+  // 根據改變的欄位聯動計算
+  if (changedSource === 'new_w' && newW.value !== '') {
+    const nw = parseFloat(newW.value);
+    if (!isNaN(nw)) newH.value = round(nw * (h / w));
+  } else if (changedSource === 'new_h' && newH.value !== '') {
+    const nh = parseFloat(newH.value);
+    if (!isNaN(nh)) newW.value = round(nh * (w / h));
+  } else if (changedSource === 'orig' && newW.value !== '') {
+    const nw = parseFloat(newW.value);
+    if (!isNaN(nw)) newH.value = round(nw * (h / w));
+  }
+
+  // 計算簡化比例 (最簡整數比)
+  const divisor = gcd(Math.round(w), Math.round(h));
+  const ratioW = Math.round(w) / divisor;
+  const ratioH = Math.round(h) / divisor;
+  const decimalRatio = round(w / h);
+
+  // 預覽圖形比例縮放計算
+  let prevWidth = 100;
+  let prevHeight = 100;
+  if (w > h) {
+    prevHeight = (h / w) * 100;
+  } else {
+    prevWidth = (w / h) * 100;
+  }
+
+  resultRatio.innerHTML = `
+    <p>最簡比例: <span>${ratioW}:${ratioH}</span><a class="copyText"><i class="fa-solid fa-copy"></i></a></p>
+    <p>長寬比值 (W/H): <span>${decimalRatio}</span><a class="copyText"><i class="fa-solid fa-copy"></i></a></p>
+    ${newW.value && newH.value ? `<p>目標尺寸: <span>${newW.value} x ${newH.value} px</span><a class="copyText"><i class="fa-solid fa-copy"></i></a></p>` : ''}
+    
+    <div class="preview_box">
+      <div class="preview_rect" style="width: ${prevWidth}px; height: ${prevHeight}px;"></div>
+    </div>
+  `;
+}
+
+// 監聽輸入事件
+origW.addEventListener('input', () => { presetSelect.value = 'custom'; updateRatio('orig'); });
+origH.addEventListener('input', () => { presetSelect.value = 'custom'; updateRatio('orig'); });
+newW.addEventListener('input', () => updateRatio('new_w'));
+newH.addEventListener('input', () => updateRatio('new_h'));
+
+// 選擇預設比例處理
+presetSelect.addEventListener('change', () => {
+  const val = presetSelect.value;
+  if (val !== 'custom') {
+    const [rw, rh] = val.split(':').map(Number);
+    origW.value = rw * 100;
+    origH.value = rh * 100;
+    updateRatio('orig');
+  }
+});
+
+// 初始化計算
+updateRatio();
+
+// 事件代理處理動態生成的 copy 按鈕
+$(document).on('click', 'a.copyText', function () {
+  const text = $(this).siblings('span').text();
+
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(text);
+  } else {
+    const textarea = document.createElement("textarea");
+    textarea.value = text;
+    textarea.style.position = "fixed";
+    textarea.style.opacity = 0;
+    document.body.appendChild(textarea);
+    textarea.select();
+    document.execCommand("copy");
+    document.body.removeChild(textarea);
+  }
+});
+</script>
+</body>
+</html>
