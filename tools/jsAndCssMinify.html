@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<script src="../js/jquery-3.3.1.min.js"></script>
+<script src="../js/main.js"></script>
+<link rel="stylesheet" href="../css/root.css">
+<link rel="stylesheet" href="../fonts/css/all.css">
+<title>JavaScript / CSS 壓縮與美化 - 工具箱</title>
+
+<style>
+:root {
+  --sub: #aaaaaa;
+  --border: #ccc;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 16px;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  font-family: "Segoe UI", system-ui, sans-serif;
+  color: var(--text-main);
+  padding: 40px 20px;
+  font-size: 16px;
+}
+
+main.container {
+  max-width: 1000px;
+  margin: auto;
+  text-align: left;
+  min-height: calc(95vh - 80px);
+}
+
+h1 {
+  font-size: 1.75rem;
+  margin: 0;
+  margin-bottom: 30px;
+  letter-spacing: 1px;
+  text-align: center;
+}
+
+h3,
+h4 {
+  margin: 0;
+}
+
+p {
+  margin: 0;
+}
+
+.card {
+  border-radius: 1em;
+  padding: 30px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, .4);
+  margin-bottom: 30px;
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-gap: 1em;
+  width: 100%;
+}
+
+.card_cont {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  grid-gap: 20px;
+}
+
+.set_box_basic {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+
+.set_box {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.8;
+}
+
+.set_box.full-width {
+  grid-template-columns: 1fr;
+}
+
+.span-2 {
+  grid-column: 1 / span 2;
+}
+
+label {
+  font-size: 0.875em;
+  color: var(--sub);
+  display: block;
+  margin-bottom: 6px;
+}
+
+input,
+select,
+textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  outline: none;
+  font-size: 1rem;
+  background: var(--inputBg);
+  font-family: inherit;
+}
+
+select {
+  cursor: pointer;
+}
+
+textarea {
+  font-family: 'Consolas', 'Fira Code', 'Monaco', monospace;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  resize: vertical;
+  min-height: 180px;
+}
+
+input[disabled] {
+  color: var(--text-main);
+  background: var(--resultBg);
+}
+
+.btn-group {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.btn-group>*{flex: 1;}
+
+button,
+.btn-link {
+  color: var(--text-main);
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  text-decoration: none;
+}
+
+
+button.primary {
+  background: var(--accent);
+  color: #000;
+  border: none;
+}
+
+button.primary:hover {
+  filter: brightness(1.1);
+  color: #000;
+}
+
+.options-row {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  font-size: 0.85em;
+  color: var(--sub);
+  margin-top: 4px;
+}
+
+.options-row label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 0;
+  cursor: pointer;
+}
+
+.options-row input[type="checkbox"] {
+  width: auto;
+  cursor: pointer;
+}
+
+.result {
+  font-size: 1em;
+  line-height: 1.8;
+  display: flex;
+  flex-direction: column;
+}
+
+.set_box h4, 
+.result h4 {
+  margin-top: 0;
+  margin-bottom: .5em;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.result>div {
+  background: var(--resultBg);
+  padding: 1em;
+  border-radius: 10px;
+  color: var(--text-main);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.result span {
+  color: var(--accent);
+  font-weight: bold;
+}
+
+.result textarea {
+  background: transparent;
+  border: none;
+  padding: 0;
+  min-height: calc(180px - 2em);
+  height: 100%;
+  color: var(--text-main);
+}
+
+.result textarea::placeholder{
+  color: var(--text-main);
+}
+
+.stats-summary {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--border);
+  font-size: 0.85em;
+  color: var(--sub);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  justify-content: space-between;
+}
+
+.copyText {
+  margin-left: .5em;
+  cursor: pointer;
+  color: var(--text-main);
+}
+
+.copyText:hover {
+  color: var(--accent);
+}
+
+.set_box_basic{
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.set_box_basic_le{
+  display: grid; 
+  grid-template-columns: 1fr;
+  grid-gap: 15px;
+}
+
+.set_box>div{
+  flex: 1;
+}
+
+.set_box>div textarea{
+  height: 100%;
+}
+
+/* Drag and Drop Zone Style */
+.drop-zone {
+  border: 2px dashed var(--border-color);
+  border-radius: 10px;
+  padding: 30px;
+  text-align: center;
+  background: var(--inputBg);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.drop-zone:hover,
+.drop-zone.dragover {
+  border-color: var(--accent);
+  background: rgba(0, 210, 255, 0.05);
+}
+
+.drop-zone i {
+  font-size: 2rem;
+  color: var(--accent);
+  margin-bottom: 10px;
+}
+
+.drop-zone p {
+  color: var(--sub);
+  font-size: 0.9em;
+}
+
+/* Toast Message */
+#toast {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: var(--card-bg);
+  border: 1px solid var(--accent);
+  color: var(--text-main);
+  padding: 12px 20px;
+  border-radius: 8px;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
+  display: none;
+  z-index: 1000;
+  font-size: 0.9rem;
+}
+
+footer {
+  text-align: center;
+  font-size: 0.8125em;
+  color: var(--sub);
+  margin-top: 40px;
+}
+
+@media (max-width:1024px) {
+.card_cont {
+  grid-template-columns: 1fr;
+}
+
+.result h4 {
+  margin-bottom: .5em;
+}
+}
+
+@media (max-width:600px) {
+.card {
+  padding: 1em;
+}
+
+.set_box {
+  grid-template-columns: 1fr;
+}
+
+.span-2 {
+  grid-column: unset;
+}
+}
+
+@media (max-width:450px) {
+
+html,
+body {
+  font-size: 14px;
+}
+}
+</style>
+</head>
+
+<body>
+
+  <div class="wrapper">
+    <main class="container">
+      <h1>JS / CSS Minify & Beautify Tool</h1>
+
+      <!-- CARD 1: Minify Tool -->
+      <div class="card minify-card">
+        <h3>程式碼輕量化 (Minify)</h3>
+        <div class="card_cont">
+
+            <div>
+              <label>程式語言 (Language)</label>
+              <select id="min_lang">
+                <option value="auto">自動判斷 (Auto)</option>
+                <option value="js">JavaScript</option>
+                <option value="css">CSS</option>
+              </select>
+            </div>
+
+            <div>
+              <label>處理設定 (Options)</label>
+              <div class="options-row" style="height: 42px;">
+                <label><input type="checkbox" id="min_keep_header" checked> 保留 /*! 版權註解 */</label>
+              </div>
+            </div>
+
+            <div class="span-2 btn-group">
+              <button class="primary" id="btn_minify"><i class="fa-solid fa-compress"></i> 執行壓縮</button>
+              <button id="btn_min_sample"><i class="fa-solid fa-vial"></i> 載入範例</button>
+              <button id="btn_min_clear"><i class="fa-solid fa-trash-can"></i> 清空</button>
+            </div>
+          <div class="set_box">
+            <h4><span>原始程式碼 (Source Code)</span></h4>
+            <div>
+              <textarea id="min_source" placeholder="請在此貼上 JavaScript 或 CSS 程式碼..."></textarea>
+            </div>
+          </div>
+
+          <div class="result">
+            <h4>
+              <span>壓縮結果</span>
+              <div>
+                <a class="copyText" title="複製結果" id="btn_copy_min"><i class="fa-solid fa-copy"></i></a>
+              </div>
+            </h4>
+            <div>
+              <textarea id="min_result" readonly placeholder="壓縮後的結果將顯示於此..."></textarea>
+              <div class="stats-summary" id="min_stats">
+                <div>原始: <span id="stat_orig_size">0 B</span></div>
+                <div>壓縮後: <span id="stat_min_size">0 B</span></div>
+                <div>節省: <span id="stat_saved">0%</span></div>
+                <div>
+                  <button id="btn_download_min" style="padding: 4px 8px; font-size: 0.75rem;"><i
+                      class="fa-solid fa-download"></i> 下載 .min</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CARD 2: Beautify Tool -->
+      <div class="card beautify-card">
+        <h3>程式碼美化 / 格式化 (Beautify)</h3>
+        <div class="card_cont">
+          <div>
+            <label>程式語言 (Language)</label>
+            <select id="beau_lang">
+              <option value="auto">自動判斷 (Auto)</option>
+              <option value="js">JavaScript</option>
+              <option value="css">CSS</option>
+            </select>
+          </div>
+
+          <div>
+            <label>縮排排版 (Indentation)</label>
+            <select id="beau_indent">
+              <option value="2">2 個空格 (Spaces)</option>
+              <option value="4">4 個空格 (Spaces)</option>
+              <option value="tab">1 個 Tab</option>
+            </select>
+          </div>
+            
+          <div class="span-2 btn-group">
+            <button class="primary" id="btn_beautify"><i class="fa-solid fa-code"></i> 執行美化</button>
+            <button id="btn_beau_clear"><i class="fa-solid fa-trash-can"></i> 清空</button>
+          </div><!-- btn-group -->
+
+          <div class="set_box">
+            <h4><span>待格式化程式碼 (Code to Beautify)</span></h4>
+            <textarea id="beau_source" placeholder="請在此貼上需要格式化的 JavaScript 或 CSS 程式碼..."></textarea>
+          </div>
+
+            
+
+
+          <div class="result">
+            <h4>
+              <span>美化結果</span>
+              <div>
+                <a class="copyText" title="複製結果" id="btn_copy_beau"><i class="fa-solid fa-copy"></i></a>
+              </div>
+            </h4>
+            <div>
+              <textarea id="beau_result" readonly placeholder="美化後的結果將顯示於此..."></textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CARD 3: Drag & Drop File Upload -->
+      <div class="card upload-card">
+        <h3>拖曳與檔案上傳 (Drag & Drop Upload)</h3>
+        <div class="drop-zone" id="drop_zone">
+          <i class="fa-solid fa-cloud-arrow-up"></i>
+          <p>將 <strong>.js</strong> 或 <strong>.css</strong> 檔案拖曳至此處，或點擊選擇檔案</p>
+          <input type="file" id="file_input" accept=".js,.css,.txt" style="display: none;">
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- Toast Container -->
+  <div id="toast">已複製到剪貼簿！</div>
+
+
+
+  <script>
+    // ==========================================
+    // Toast Notification Function
+    // ==========================================
+    function showToast(msg) {
+      const $toast = $('#toast');
+      $toast.text(msg).stop(true, true).fadeIn(200).delay(2000).fadeOut(300);
+    }
+
+    // Helper: Format byte sizes
+    function formatBytes(bytes) {
+      if (bytes === 0) return '0 B';
+      const k = 1024;
+      const sizes = ['B', 'KB', 'MB', 'GB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    // Detect language automatically
+    function detectLanguage(code) {
+      const cssScore = (code.match(/\{[\s\S]*?\}/g) || []).length;
+      const jsScore = (code.match(/\b(var|let|const|function|return|if|else)\b/g) || []).length;
+      return cssScore > jsScore ? 'css' : 'js';
+    }
+
+    // ==========================================
+    // Minification Algorithms
+    // ==========================================
+    function minifyCSS(css, keepHeader) {
+      let preserved = [];
+      let result = css;
+
+      if (keepHeader) {
+        result = result.replace(/\/\*![\s\S]*?\*\//g, (match) => {
+          preserved.push(match);
+          return `___PRESERVED_HEADER_${preserved.length - 1}___`;
+        });
+      }
+
+      result = result
+        .replace(/\/\*[\s\S]*?\*\//g, '')                     // Remove comments
+        .replace(/\s+/g, ' ')                                 // Compress multiple spaces
+        .replace(/\s*([{}:;,])\s*/g, '$1')                    // Trim whitespace around punctuation
+        .replace(/;\}/g, '}')                                 // Remove trailing semicolons
+        .replace(/\b0(px|em|rem|pt|%|in|cm|mm|pc)/gi, '0')    // Zero units replacement
+        .replace(/#([a-f0-9])\1([a-f0-9])\2([a-f0-9])\3/gi, '#$1$2$3') // Hex color compression
+        .trim();
+
+      if (keepHeader) {
+        result = result.replace(/___PRESERVED_HEADER_(\d+)___/g, (_, idx) => preserved[idx] + '\n');
+      }
+
+      return result;
+    }
+
+    function minifyJS(js, keepHeader) {
+      let preserved = [];
+      let result = js;
+
+      if (keepHeader) {
+        result = result.replace(/\/\*![\s\S]*?\*\//g, (match) => {
+          preserved.push(match);
+          return `___PRESERVED_HEADER_${preserved.length - 1}___`;
+        });
+      }
+
+      let i = 0;
+      const len = result.length;
+      let clean = '';
+      let inString = false;
+      let quoteChar = '';
+      let inSingleComment = false;
+      let inMultiComment = false;
+
+      while (i < len) {
+        const char = result[i];
+        const nextChar = result[i + 1];
+
+        // Single line comments
+        if (!inString && !inMultiComment && char === '/' && nextChar === '/') {
+          inSingleComment = true;
+          i += 2;
+          continue;
+        }
+        if (inSingleComment) {
+          if (char === '\n' || char === '\r') inSingleComment = false;
+          i++;
+          continue;
+        }
+
+        // Multi line comments
+        if (!inString && !inSingleComment && char === '/' && nextChar === '*') {
+          inMultiComment = true;
+          i += 2;
+          continue;
+        }
+        if (inMultiComment) {
+          if (char === '*' && nextChar === '/') {
+            inMultiComment = false;
+            i += 2;
+          } else {
+            i++;
+          }
+          continue;
+        }
+
+        // String literals
+        if (!inString && (char === '"' || char === "'" || char === '`')) {
+          inString = true;
+          quoteChar = char;
+          clean += char;
+          i++;
+          continue;
+        }
+        if (inString) {
+          clean += char;
+          if (char === quoteChar && result[i - 1] !== '\\') inString = false;
+          i++;
+          continue;
+        }
+
+        // Whitespace handling
+        if (/\s/.test(char)) {
+          const last = clean[clean.length - 1] || '';
+          if (last && /[a-zA-Z0-9_$\\]/.test(last) && /[a-zA-Z0-9_$\\]/.test(nextChar || '')) {
+            clean += ' ';
+          }
+          i++;
+          continue;
+        }
+
+        clean += char;
+        i++;
+      }
+
+      result = clean.replace(/\s*([=+\-*\/%><!&|^~?:;,{}()\[\]])\s*/g, '$1').trim();
+
+      if (keepHeader) {
+        result = result.replace(/___PRESERVED_HEADER_(\d+)___/g, (_, idx) => preserved[idx] + '\n');
+      }
+
+      return result;
+    }
+
+    // ==========================================
+    // Beautify Algorithms
+    // ==========================================
+    function beautifyCSS(css, indentType) {
+      const indent = indentType === 'tab' ? '\t' : ' '.repeat(parseInt(indentType));
+      let result = '';
+      let level = 0;
+      const clean = css.replace(/\s+/g, ' ');
+
+      for (let i = 0; i < clean.length; i++) {
+        const char = clean[i];
+        if (char === '{') {
+          result += ' {\n' + indent.repeat(++level);
+        } else if (char === '}') {
+          result = result.trimEnd();
+          level = Math.max(0, level - 1);
+          result += '\n' + indent.repeat(level) + '}\n\n' + indent.repeat(level);
+        } else if (char === ';') {
+          result += ';\n' + indent.repeat(level);
+        } else {
+          result += char;
+        }
+      }
+      return result.trim();
+    }
+
+    function beautifyJS(js, indentType) {
+      const indentStr = indentType === 'tab' ? '\t' : ' '.repeat(parseInt(indentType));
+      let level = 0;
+      let result = '';
+      const lines = js.replace(/;(?![^\('"]*\))/g, ';\n').split('\n');
+
+      for (let rawLine of lines) {
+        let line = rawLine.trim();
+        if (!line) continue;
+        if (line.startsWith('}')) level = Math.max(0, level - 1);
+        result += indentStr.repeat(level) + line + '\n';
+        if (line.endsWith('{')) level++;
+      }
+      return result.trim();
+    }
+
+    // ==========================================
+    // Event Bindings & User Actions
+    // ==========================================
+    $(document).ready(function () {
+
+      // Minify Action
+      $('#btn_minify').on('click', function () {
+        const src = $('#min_source').val();
+        if (!src.trim()) {
+          $('#min_result').val('');
+          updateMinStats(0, 0);
+          return;
+        }
+
+        let lang = $('#min_lang').val();
+        if (lang === 'auto') lang = detectLanguage(src);
+
+        const keepHeader = $('#min_keep_header').is(':checked');
+        let minified = '';
+
+        try {
+          minified = lang === 'css' ? minifyCSS(src, keepHeader) : minifyJS(src, keepHeader);
+        } catch (e) {
+          minified = '/* 壓縮時發生錯誤: ' + e.message + ' */';
+        }
+
+        $('#min_result').val(minified);
+        updateMinStats(src.length, minified.length);
+      });
+
+      function updateMinStats(origLen, minLen) {
+        $('#stat_orig_size').text(formatBytes(origLen));
+        $('#stat_min_size').text(formatBytes(minLen));
+        const saved = origLen > 0 ? Math.round(((origLen - minLen) / origLen) * 100) : 0;
+        $('#stat_saved').text(`${saved}%`);
+      }
+
+      // Minify Samples
+      $('#btn_min_sample').on('click', function () {
+        const sampleJS = `/*!\n * Sample JavaScript Library v1.0.0\n * (c) 2026 Toolkit\n */\nfunction calculateTotal(price, taxRate) {\n    // Calculate final price with tax\n    const tax = price * (taxRate / 100);\n    const total = price + tax;\n    console.log("Calculated total:", total);\n    return total;\n}`;
+        $('#min_source').val(sampleJS);
+        $('#min_lang').val('js');
+        $('#btn_minify').click();
+      });
+
+      $('#btn_min_clear').on('click', function () {
+        $('#min_source').val('');
+        $('#min_result').val('');
+        updateMinStats(0, 0);
+      });
+
+      // Beautify Action
+      $('#btn_beautify').on('click', function () {
+        const src = $('#beau_source').val();
+        if (!src.trim()) {
+          $('#beau_result').val('');
+          return;
+        }
+
+        let lang = $('#beau_lang').val();
+        if (lang === 'auto') lang = detectLanguage(src);
+
+        const indent = $('#beau_indent').val();
+        let beautified = '';
+
+        try {
+          beautified = lang === 'css' ? beautifyCSS(src, indent) : beautifyJS(src, indent);
+        } catch (e) {
+          beautified = '/* 美化時發生錯誤: ' + e.message + ' */';
+        }
+
+        $('#beau_result').val(beautified);
+      });
+
+      $('#btn_beau_clear').on('click', function () {
+        $('#beau_source').val('');
+        $('#beau_result').val('');
+      });
+
+      // Download Minified File
+      $('#btn_download_min').on('click', function () {
+        const code = $('#min_result').val();
+        if (!code) {
+          showToast('沒有可供下載的結果！');
+          return;
+        }
+        let lang = $('#min_lang').val();
+        if (lang === 'auto') lang = detectLanguage($('#min_source').val());
+
+        const blob = new Blob([code], { type: 'text/plain;charset=utf-8' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `minified_code.min.${lang}`;
+        a.click();
+        URL.revokeObjectURL(a.href);
+      });
+
+      // Copy Buttons handler via jQuery event delegation matching user's exact pattern
+      $(document).on('click', 'a.copyText', function () {
+        let text = $(this).siblings('span').text();
+
+        // If copied inside textarea result block
+        if (!text) {
+          text = $(this).closest('.result').find('textarea').val();
+        }
+
+        if (!text) {
+          showToast('無可複製內容');
+          return;
+        }
+
+        if (navigator.clipboard && window.isSecureContext) {
+          navigator.clipboard.writeText(text).then(function () {
+            showToast('已成功複製到剪貼簿！');
+          });
+        } else {
+          const textarea = document.createElement("textarea");
+          textarea.value = text;
+          textarea.style.position = "fixed";
+          textarea.style.opacity = '0';
+
+          document.body.appendChild(textarea);
+          textarea.select();
+          document.execCommand("copy");
+          document.body.removeChild(textarea);
+
+          showToast('已成功複製到剪貼簿！');
+        }
+      });
+
+      // Drag and Drop Upload Handlers
+      const $dropZone = $('#drop_zone');
+      const $fileInput = $('#file_input');
+
+      $dropZone.on('click', function () {
+        $fileInput.click();
+      });
+
+      $dropZone.on('dragover dragenter', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        $dropZone.addClass('dragover');
+      });
+
+      $dropZone.on('dragleave drop', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        $dropZone.removeClass('dragover');
+      });
+
+      $dropZone.on('drop', function (e) {
+        const files = e.originalEvent.dataTransfer.files;
+        if (files.length > 0) handleFile(files[0]);
+      });
+
+      $fileInput.on('change', function (e) {
+        if (e.target.files.length > 0) handleFile(e.target.files[0]);
+      });
+
+      function handleFile(file) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          const content = e.target.result;
+          const isCSS = file.name.endsWith('.css');
+          const isJS = file.name.endsWith('.js');
+
+          // Populate input areas and run minification
+          $('#min_source').val(content);
+          $('#beau_source').val(content);
+
+          if (isCSS) {
+            $('#min_lang').val('css');
+            $('#beau_lang').val('css');
+          } else if (isJS) {
+            $('#min_lang').val('js');
+            $('#beau_lang').val('js');
+          }
+
+          $('#btn_minify').click();
+          $('#btn_beautify').click();
+
+          showToast(`已成功載入檔案: ${file.name}`);
+        };
+        reader.readAsText(file);
+      }
+
+    });
+  </script>
+</body>
+
+</html>
