@@ -1,7 +1,7 @@
 $(document).ready(function(){
   // 1. 產生按鈕
-  const themeBtnHtml = `<div class="theme-toggle" id="themeBtn"><i class="fa-solid fa-circle-half-stroke"></i> 模式切換</div>`;
-  const backToIndex = `<a href="../index.html" class="back-link">← 返回首頁工具列表</a>`
+  const themeBtnHtml = `<div class="theme-toggle" id="themeBtn"><i class="fa-solid fa-circle-half-stroke"></i><span>模式切換</span></div>`;
+  const backToIndex = `<a href="../index.html" class="back-link"><i class="fa-solid fa-house"></i><span>回列表</span></a>`;
   $('body').prepend(themeBtnHtml);
   $('.card:last-of-type').after(backToIndex);
 
