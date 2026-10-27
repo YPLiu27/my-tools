@@ -16,7 +16,7 @@
 
   <style>
     :root {
-      --border: #b4b4b4;
+      --border: #475569;
     }
 
     * {
@@ -77,10 +77,6 @@
       display: grid;
       grid-template-columns: 1.5fr 1fr;
       grid-gap: var(--gap15);
-    }
-
-    .img_upload{
-
     }
 
     .set_box_basic {
@@ -155,10 +151,6 @@
       border: none;
     }
 
-    .logo-card input[type="color"]{
-      height: calc(1.5em + 18px);
-    }
-
     input[disabled] {
       background: var(--resultBg);
       opacity: 0.7;
@@ -212,8 +204,6 @@
       font-size: 0.85em;
       color: var(--sub);
       margin-top: 4px;
-      flex-direction: column;
-      justify-content: flex-end;
     }
 
     .options-row label {
@@ -324,7 +314,7 @@
       border-radius: 10px;
       padding: 25px;
       text-align: center;
-      background: rgba(255,255,255,.3);
+      background: var(--inputBg);
       cursor: pointer;
       transition: all 0.3s ease;
     }
@@ -397,11 +387,6 @@
         display: grid;
         grid-template-columns: 1fr 1fr;
         align-items: flex-end;
-      }
-
-      .set_box_basic{
-        grid-column: unset;
-        grid-template-columns: repeat(2, 1fr);
       }
     }
 
@@ -601,6 +586,7 @@
                   <option value="png" selected>PNG 格式</option>
                   <option value="jpg">JPG 格式</option>
                   <option value="webp">WebP 格式</option>
+                  <option value="svg">SVG 向量格式</option>
                 </select>
               </div>
             </div>
@@ -642,14 +628,16 @@
       <div class="card logo-card">
         <h3><i class="fa-solid fa-icons"></i> 中央圖示 / Logo 疊加與樣式 (選用)</h3>
         <div class="card_cont">
-          <div class="drop-zone span-2" id="drop_zone">
-            <i class="fa-solid fa-cloud-arrow-up"></i>
-            <p>點擊上傳或拖曳圖片 (PNG / JPG / SVG) 作為中央 Logo</p>
-            <input type="file" id="file_input" accept="image/*" style="display: none;">
-          </div>
-          <div id="logo_info" class="options-row" style="display: none;">
-            <span id="logo_name" style="color: var(--accent);">已選擇檔案: logo.png</span>
-            <button id="btn_remove_logo" style="padding: 4px 10px; font-size: 0.8rem;"><i class="fa-solid fa-xmark"></i> 移除 Logo</button>
+          <div class="span-2">
+            <div class="drop-zone" id="drop_zone">
+              <i class="fa-solid fa-cloud-arrow-up"></i>
+              <p>點擊上傳或拖曳圖片 (PNG / JPG / SVG) 作為中央 Logo</p>
+              <input type="file" id="file_input" accept="image/*" style="display: none;">
+            </div>
+            <div id="logo_info" class="options-row" style="margin-top: 10px; display: none; justify-content: space-between;">
+              <span id="logo_name" style="color: var(--accent);">已選擇檔案: logo.png</span>
+              <button id="btn_remove_logo" style="padding: 4px 10px; font-size: 0.8rem;"><i class="fa-solid fa-xmark"></i> 移除 Logo</button>
+            </div>
           </div>
 
           <!-- Logo Styling Controls (Visible when logo uploaded) -->
@@ -1026,9 +1014,29 @@
         showToast('內容已清空');
       });
 
-      // Download Action (Supports PNG, JPG, WebP)
+      // Download Action (Supports PNG, JPG, WebP, SVG)
       $('#btn_download_png').on('click', function () {
-        const format = $('#qr_format').val(); // png, jpg, webp
+        const format = $('#qr_format').val(); // png, jpg, webp, svg
+
+        if (format === 'svg') {
+          getMergedCanvas(function (canvas) {
+            const dataUrl = canvas.toDataURL('image/png');
+            const svgWidth = canvas.width;
+            const svgHeight = canvas.height;
+            const svgString = `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${svgWidth}" height="${svgHeight}" viewBox="0 0 ${svgWidth} ${svgHeight}">\n  <image width="${svgWidth}" height="${svgHeight}" xlink:href="${dataUrl}"/>\n</svg>`;
+            
+            const blob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `qrcode_${Date.now()}.svg`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('已開始下載 QR Code (SVG)！');
+          });
+          return;
+        }
+
         let mimeType = 'image/png';
         let ext = 'png';
 
@@ -1083,12 +1091,12 @@
       $dropZone.on('click', function (e) {
         e.preventDefault();
         e.stopPropagation();
-        $fileInput.val(''); // 清空舊值以允許再次選擇相同檔案
+        $fileInput.val('');
         $fileInput.trigger('click');
       });
 
       $fileInput.on('click', function (e) {
-        e.stopPropagation(); // 阻止向上冒泡回 drop_zone 避免重複引發點擊
+        e.stopPropagation();
       });
 
       $dropZone.on('dragover dragenter', function (e) {
@@ -1122,10 +1130,8 @@
         reader.onload = function (e) {
           customLogoDataUrl = e.target.result;
           $('#logo_name').text(`已載入 Logo: ${file.name}`);
-          $dropZone.removeClass('span-2');
           $('#logo_info').show();
           $('#logo_style_options').show();
-          
 
           // Auto switch to high error correction level for logo capability
           $('#qr_correct_level').val('H');
