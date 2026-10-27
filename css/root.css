@@ -188,6 +188,10 @@ button {
     padding-bottom: 50px;
   }
 
+  h1{
+    text-align: left;
+  }
+
   .container{
     min-height: 80vh;
   }
