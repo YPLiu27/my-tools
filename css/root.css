@@ -10,6 +10,7 @@
   --accent: #ee9b00;
   --resultBg:rgba(255,255,255,.2);
   --gap15:min(15px,3vw);
+  --gap10:min(10px,2vw);
 }
 
 [data-theme="bright"] {
@@ -17,6 +18,7 @@
   --card-bg: #ffffff;
   --text-main: #333;
   --border: #ddd;
+  --primary: #55a3ad;
   --drop-bg: #fafafa;
   --inputBg: #eeeeee;
   --resultBg:rgba(0,0,0,.02);
@@ -90,18 +92,6 @@ body {
   padding: 0 20px;
 }
 
-
-.theme-toggle {
-  position: absolute;
-  top: 20px;
-  right: 20px;
-  cursor: pointer;
-  padding: 10px 15px;
-  background: var(--card-bg);
-  border: 1px solid var(--border);
-  border-radius: 50px;
-}
-
 button {
   background: var(--primary);
   color: white;
@@ -119,7 +109,7 @@ button {
 }
 
 .container {
-  max-width: 500px;
+  max-width: 900px;
   margin: 0 auto;
   text-align: center;
   display: flex;
@@ -130,14 +120,6 @@ button {
   flex-direction: column;
 }
 
-.back-link {
-  display: block;
-  margin-bottom: 20px;
-  color: var(--primary);
-  text-decoration: none;
-  font-weight: bold;
-}
-
 .card {
   background: var(--card-bg);
   padding: 30px;
@@ -146,10 +128,49 @@ button {
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
 }
 
-.card + .back-link{
-  margin: 0 auto;
-  margin-top: 20px;
-  width: fit-content;
+
+.theme-toggle, 
+.back-link{
+  position: fixed;
+  border-left: 0;
+  line-height: 1;
+  left: unset;
+  bottom: unset;
+  border: 0;
+  box-shadow: 0px 0px 5px rgba(0,0,0,.3);
+  top: var(--gap15);
+  right: var(--gap15);
+  border-radius: 50px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  align-content: center;
+  padding: .5em;
+  gap: .5em;
+  width: 8em;
+  height: 2.5em;
+  color: var(--text-main);
+  text-decoration: none;
+  background: var(--card-bg);
+}
+
+
+.theme-toggle {
+  cursor: pointer;
+}
+
+.theme-toggle:not(.indexPage .theme-toggle){
+  top: calc(2.5em + var(--gap15) + var(--gap15));
+}
+
+.back-link{
+  background: var(--primary);
+}
+
+.back-link span{
+  width: 4em;
+  text-align: left;
+  text-align-last: justify;
 }
 
 @media (max-width:769px) {
@@ -161,17 +182,22 @@ button {
   .container{
     min-height: 80vh;
   }
-  .theme-toggle{
-    position: fixed;
+
+
+  .theme-toggle, 
+  .back-link{
+    width: 2.5em;
+    height: 2.5em;
+    top: var(--gap10);
+    right: var(--gap10);
   }
 
-  .theme-toggle{
-    width: 3em;
-    height: 3em;
-    overflow: hidden;
+  .theme-toggle span, 
+  .back-link span{
+    display: none;
   }
 
-  .theme-toggle i{
-    margin-bottom: 2em;
+  .theme-toggle:not(.indexPage .theme-toggle){
+    top: calc(2.5em + var(--gap10) + var(--gap10));
   }
 }
