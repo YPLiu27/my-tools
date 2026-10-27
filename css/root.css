@@ -9,6 +9,7 @@
   --primary: #2695a3;
   --accent: #ee9b00;
   --resultBg:rgba(255,255,255,.2);
+  --gap15:min(15px,3vw);
 }
 
 [data-theme="bright"] {
@@ -113,6 +114,10 @@ button {
   transition: 0.2s;
 }
 
+@media (hover: hover) and (pointer: fine) {
+  button:hover{background: var(--drop-bg);}
+}
+
 .container {
   max-width: 500px;
   margin: 0 auto;
@@ -147,7 +152,6 @@ button {
   width: fit-content;
 }
 
-
 @media (max-width:769px) {
   body{
     padding-top: 50px;
@@ -156,5 +160,18 @@ button {
 
   .container{
     min-height: 80vh;
+  }
+  .theme-toggle{
+    position: fixed;
+  }
+
+  .theme-toggle{
+    width: 3em;
+    height: 3em;
+    overflow: hidden;
+  }
+
+  .theme-toggle i{
+    margin-bottom: 2em;
   }
 }
