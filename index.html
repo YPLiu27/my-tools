@@ -71,8 +71,12 @@
     }
 
     @media (max-width:768px) {
-      .tool-link{display: grid; grid-template-columns: 70px 1fr;}
-      .tool-card .icon{grid-row: 1 / span 2; display: flex; justify-content: center; align-items: center; align-content: center; margin: 0;}
+      .tool-grid{grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));}
+      .tool-link{display: grid; grid-template-columns: 2em 1fr; grid-gap: 1em;}
+      .tool-card .icon{display: flex; justify-content: center; align-items: center; align-content: center; margin: 0;}
+      .tool-link>p{
+        grid-column: span 2;
+      }
     }
   </style>
 </head>
