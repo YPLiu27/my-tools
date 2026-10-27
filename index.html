@@ -2,83 +2,82 @@
 <html lang="zh-TW">
 
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <script src="js/jquery-3.3.1.min.js"></script>
-  <script src="js/main.js"></script>
-  <link rel="stylesheet" href="fonts/css/all.css">
-  <link rel="stylesheet" href="css/root.css">
-  <title>全能工具箱 - 導航首頁</title>
-  <style>
-    .container {
-      max-width: 950px;
-    }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="js/jquery-3.3.1.min.js"></script>
+<script src="js/main.js"></script>
+<link rel="stylesheet" href="fonts/css/all.css">
+<link rel="stylesheet" href="css/root.css">
+<title>全能工具箱 - 導航首頁</title>
+<style>
+.container {
+  max-width: 950px;
+}
 
-    .tool-grid {
-      width: 100%;
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
-      gap: min(15px,4vw);
-      margin-top: 40px;
-    }
+.tool-grid {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: min(15px,4vw);
+  margin-top: 40px;
+}
 
-    /* 連結樣式 */
-    .tool-card {
-      background: var(--card-bg);
-      border-radius: 16px;
-      border: 1px solid var(--border);
-      text-align: left;
-      transition: 0.3s;
-      height: 100%;
-    }
+/* 連結樣式 */
+.tool-card {
+  background: var(--card-bg);
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  text-align: left;
+  transition: 0.3s;
+  height: 100%;
+}
 
-    .tool-link {
-      text-decoration: none;
-      color: inherit;
-      display: block;
-      height: 100%;
-      padding: 25px;
-      transition: .3s;
-    }
+.tool-link {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+  height: 100%;
+  padding: 25px;
+  transition: .3s;
+}
 
-    .tool-card:hover {
-      border-color: var(--primary);
-      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
-    }
+.tool-card:hover {
+  border-color: var(--primary);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+}
 
-    .tool-card:hover a {
-      transform: translateY(-5px);
-    }
+.tool-card:hover a {
+  transform: translateY(-5px);
+}
 
-    .tool-card .icon {
-      font-size: 32px;
-      margin-bottom: 15px;
-      display: block;
-    }
+.tool-card .icon {
+  font-size: 32px;
+  margin-bottom: 15px;
+  display: block;
+}
 
-    a {
-      color: inherit;
-      text-decoration: none;
-    }
+a {
+  color: inherit;
+  text-decoration: none;
+}
 
-    h3 {
-      margin: 0 0 10px 0;
-    }
+h3 {
+  margin: 0 0 10px 0;
+}
 
-    p {
-      font-size: 14px;
-      color: #888;
-    }
+p {
+  font-size: 14px;
+  color: #888;
+}
 
-    @media (max-width:768px) {
-      .tool-grid{grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));}
-      .tool-link{display: grid; grid-template-columns: 2em 1fr; grid-gap: 1em;}
-      .tool-card .icon{display: flex; justify-content: center; align-items: center; align-content: center; margin: 0;}
-      .tool-link>p{
-        grid-column: span 2;
-      }
-    }
-  </style>
+@media (max-width:768px) {
+  .tool-grid{grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));}
+  .tool-link{display: grid; grid-template-columns: 3em 1fr; grid-gap: .5em 1em; align-items: center;}
+  .tool-link h3{margin: 0;}
+  .tool-card .icon{display: flex; justify-content: center; align-items: center; align-content: center; margin: 0; text-align: center;}
+  .tool-link>p{grid-column: span 2;}
+}
+</style>
 </head>
 
 <body class="indexPage">
@@ -121,6 +120,7 @@
         <a href="tools/textChange.html" class="tool-link">
           <span class="icon"><i class="fa-solid fa-arrow-right-arrow-left"></i></span>
           <h3>字體單位換算</h3>
+          <p>字體大小單位換算，em、rem、vw、vh、%換算，附加斜邊計算</p>
         </a>
       </div>
       <div class="tool-card">
