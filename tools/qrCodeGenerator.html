@@ -1,0 +1,1157 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+  <link rel="stylesheet" href="../fonts/css/all.css">
+  <link rel="stylesheet" href="../css/root.css">
+  <script src="../js/jquery-3.3.1.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
+  <script src="../js/main.js"></script>
+  <title>QR Code 產生器 - 工具箱</title>
+
+  <style>
+    :root {
+      --border: #b4b4b4;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      font-size: 16px;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+      color: var(--text-main);
+      padding: 40px 20px;
+      font-size: 16px;
+    }
+
+    main.container {
+      max-width: 1000px;
+      margin: auto;
+      text-align: left;
+      min-height: calc(95vh - 80px);
+    }
+
+    h1 {
+      font-size: 1.75rem;
+      margin: 0;
+      margin-bottom: 30px;
+      letter-spacing: 1px;
+      text-align: center;
+      color: var(--text-main);
+    }
+
+    h3,
+    h4 {
+      margin: 0;
+    }
+
+    p {
+      margin: 0;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border-radius: 1em;
+      padding: 30px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, .4);
+      margin-bottom: 30px;
+      display: grid;
+      grid-template-columns: 1fr;
+      grid-gap: 1em;
+      width: 100%;
+    }
+
+    .card_cont {
+      display: grid;
+      grid-template-columns: 1.5fr 1fr;
+      grid-gap: var(--gap15);
+    }
+
+    .img_upload{
+
+    }
+
+    .set_box_basic {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: var(--gap15);
+    }
+
+    .set_box {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.8;
+    }
+
+    .set_box.full-width {
+      grid-template-columns: 1fr;
+    }
+
+    .span-2 {
+      grid-column: 1 / span 2;
+    }
+
+    label {
+      font-size: 0.875em;
+      color: var(--sub);
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      outline: none;
+      font-size: 1rem;
+      background: var(--inputBg);
+      font-family: inherit;
+    }
+
+    select {
+      cursor: pointer;
+      font-size: .9em;
+    }
+
+    textarea {
+      font-family: 'Consolas', 'Fira Code', 'Monaco', monospace;
+      font-size: 0.875rem;
+      line-height: 1.5;
+      resize: vertical;
+      min-height: 120px;
+    }
+
+    input[type="color"] {
+      height: 2.2em;
+      appearance: none;
+      padding: 0;
+      cursor: pointer;
+      border: none;
+      overflow: hidden;
+      border-radius: 6px;
+    }
+
+    input[type="color" i]::-webkit-color-swatch-wrapper {
+      padding: 0;
+      border: none;
+    }
+
+    input[type="color" i]::-webkit-color-swatch {
+      border: none;
+    }
+
+    .logo-card input[type="color"]{
+      height: calc(1.5em + 18px);
+    }
+
+    input[disabled] {
+      background: var(--resultBg);
+      opacity: 0.7;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .btn-group>* {
+      flex: 1;
+    }
+
+    button,
+    .btn-link {
+      border: 1px solid var(--border);
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      text-decoration: none;
+    }
+
+    button:hover {
+      background: #475569;
+    }
+
+    button.primary {
+      background: var(--accent);
+      color: #0f172a;
+      border: none;
+    }
+
+    button.primary:hover {
+      filter: brightness(1.1);
+      color: #0f172a;
+    }
+
+    .options-row {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      font-size: 0.85em;
+      color: var(--sub);
+      margin-top: 4px;
+      flex-direction: column;
+      justify-content: flex-end;
+    }
+
+    .options-row label {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 0;
+      cursor: pointer;
+    }
+
+    .options-row input[type="checkbox"] {
+      width: auto;
+      cursor: pointer;
+    }
+
+    .result {
+      font-size: 1em;
+      line-height: 1.8;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .set_box h4,
+    .result h4 {
+      margin-top: 0;
+      margin-bottom: .5em;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: var(--text-main);
+    }
+
+    .result>div {
+      background: var(--resultBg);
+      padding: 1.5em;
+      border-radius: 10px;
+      color: var(--text-main);
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 15px;
+      border: 1px solid var(--border);
+    }
+
+    .result span {
+      color: var(--accent);
+      font-weight: bold;
+    }
+
+    #qr_wrapper {
+      position: relative;
+      background: #ffffff;
+      padding: 16px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+      max-width: 100%;
+      overflow: hidden;
+    }
+
+    #qr_code canvas,
+    #qr_code img {
+      display: block;
+      max-width: 100%;
+      height: auto !important;
+    }
+
+    .logo-overlay {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      background: #ffffff;
+      padding: 4px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .logo-overlay img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    /* Drag and Drop Zone Style */
+    .drop-zone {
+      border: 2px dashed var(--border);
+      border-radius: 10px;
+      padding: 25px;
+      text-align: center;
+      background: rgba(255,255,255,.3);
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .drop-zone:hover,
+    .drop-zone.dragover {
+      border-color: var(--accent);
+      background: rgba(56, 189, 248, 0.1);
+    }
+
+    .drop-zone i {
+      font-size: 2rem;
+      color: var(--accent);
+      margin-bottom: 10px;
+    }
+
+    .drop-zone p {
+      color: var(--sub);
+      font-size: 0.9em;
+    }
+
+    /* Toast Message */
+    #toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: var(--card-bg);
+      border: 1px solid var(--accent);
+      color: var(--text-main);
+      padding: 12px 20px;
+      border-radius: 8px;
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
+      display: none;
+      z-index: 1000;
+      font-size: 0.9rem;
+    }
+
+    footer {
+      text-align: center;
+      font-size: 0.8125em;
+      color: var(--sub);
+      margin-top: 40px;
+    }
+
+    @media (max-width:1024px) {
+      .card_cont {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .set_box_basic {
+        grid-template-columns: 1fr;
+      }
+
+      .btn-group>* {
+        width: 100%;
+        flex: unset;
+      }
+    }
+
+    @media (max-width:768px) {
+      .card_cont {
+        grid-template-columns: 1fr;
+      }
+
+      .result h4 {
+        margin-bottom: .5em;
+      }
+
+      .result>div {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        align-items: flex-end;
+      }
+
+      .set_box_basic{
+        grid-column: unset;
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width:600px) {
+      .card {
+        padding: 1em;
+      }
+
+      .set_box_basic {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .span-2 {
+        grid-column: unset;
+      }
+
+      .btn-group>* {
+        flex: 1 1 100%;
+      }
+
+      #qr_wrapper {
+        padding: var(--gap15);
+      }
+    }
+
+    @media (max-width:450px) {
+
+      html,
+      body {
+        font-size: 14px;
+      }
+    }
+
+    @media (max-width:375px) {
+      .set_box_basic {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="wrapper">
+    <main class="container">
+      <h1><i class="fa-solid fa-qrcode"></i> QR Code 產生器 - 工具箱</h1>
+
+      <!-- CARD 1: Generator Tool -->
+      <div class="card qrcode-card">
+        <h3>QR Code 內容與參數設定</h3>
+        <div class="card_cont">
+
+          <!-- Left Column: Settings & Content Input -->
+          <div class="set_box_basic_le" style="display: flex; flex-direction: column; gap: 15px;">
+            <div>
+              <label><i class="fa-solid fa-layer-group"></i> 內容類型 (Content Type)</label>
+              <select id="qr_type">
+                <option value="text">文字 / 網址 (Text / URL)</option>
+                <option value="wifi">Wi-Fi 無線網路</option>
+                <option value="email">電子郵件 (Email)</option>
+                <option value="sms">簡訊 / 電話 (SMS / Phone)</option>
+                <option value="vcard">名片 (vCard Contact)</option>
+              </select>
+            </div>
+
+            <!-- Tab 1: Text / URL -->
+            <div id="tab_text" class="tab-content active">
+              <label>輸入網址或文字內容</label>
+              <textarea id="input_text" placeholder="https://example.com 或任意文字..."></textarea>
+            </div>
+
+            <!-- Tab 2: Wi-Fi -->
+            <div id="tab_wifi" class="tab-content">
+              <div>
+                <label>Wi-Fi 名稱 (SSID)</label>
+                <input type="text" id="wifi_ssid" placeholder="例如: MyHome_5G">
+              </div>
+              <div>
+                <label>密碼 (Password)</label>
+                <input type="text" id="wifi_pass" placeholder="Wi-Fi 密碼">
+              </div>
+              <div>
+                <label>加密類型 (Encryption)</label>
+                <select id="wifi_enc">
+                  <option value="WPA">WPA / WPA2 / WPA3</option>
+                  <option value="WEP">WEP</option>
+                  <option value="nopass">無密碼 (Unencrypted)</option>
+                </select>
+              </div>
+              <div class="options-row">
+                <label><input type="checkbox" id="wifi_hidden"> 隱藏的 SSID (Hidden Network)</label>
+              </div>
+            </div>
+
+            <!-- Tab 3: Email -->
+            <div id="tab_email" class="tab-content">
+              <div>
+                <label>收件者 Email</label>
+                <input type="email" id="email_to" placeholder="target@example.com">
+              </div>
+              <div>
+                <label>郵件主旨 (Subject)</label>
+                <input type="text" id="email_sub" placeholder="詢問事項...">
+              </div>
+              <div>
+                <label>郵件內文 (Body)</label>
+                <textarea id="email_body" placeholder="內容..."></textarea>
+              </div>
+            </div>
+
+            <!-- Tab 4: SMS / Phone -->
+            <div id="tab_sms" class="tab-content">
+              <div>
+                <label>模式 (Mode)</label>
+                <select id="sms_mode">
+                  <option value="sms">發送簡訊 (SMS)</option>
+                  <option value="tel">撥打電話 (Phone Call)</option>
+                </select>
+              </div>
+              <div>
+                <label>電話號碼 (Phone Number)</label>
+                <input type="tel" id="sms_phone" placeholder="+886912345678">
+              </div>
+              <div id="sms_body_box">
+                <label>簡訊內容 (Message)</label>
+                <textarea id="sms_body" placeholder="簡訊預設文字..."></textarea>
+              </div>
+            </div>
+
+            <!-- Tab 5: vCard Contact -->
+            <div id="tab_vcard" class="tab-content">
+              <div>
+                <label>姓名 (Full Name)</label>
+                <input type="text" id="vcard_name" placeholder="王小明">
+              </div>
+              <div>
+                <label>電話 (Phone)</label>
+                <input type="tel" id="vcard_phone" placeholder="0912345678">
+              </div>
+              <div>
+                <label>Email</label>
+                <input type="email" id="vcard_email" placeholder="name@company.com">
+              </div>
+              <div>
+                <label>公司 / 單位 (Company)</label>
+                <input type="text" id="vcard_org" placeholder="某某科技公司">
+              </div>
+            </div>
+
+            <!-- Customization Options -->
+            <div class="set_box_basic">
+              <div>
+                <label>前景色 (Foreground)</label>
+                <input type="color" id="qr_color_dark" value="#000000">
+              </div>
+              <div>
+                <label>背景色 (Background)</label>
+                <input type="color" id="qr_color_light" value="#ffffff">
+              </div>
+            </div>
+
+            <div class="set_box_basic">
+              <div>
+                <label>尺寸大小 (Size)</label>
+                <select id="qr_size">
+                  <option value="128">128 x 128 px</option>
+                  <option value="256">256 x 256 px</option>
+                  <option value="512" selected>512 x 512 px</option>
+                  <option value="1024">1024 x 1024 px</option>
+                </select>
+              </div>
+              <div>
+                <label>外圍白邊 (Margin)</label>
+                <select id="qr_margin">
+                  <option value="0">0 px (無白邊)</option>
+                  <option value="10">10 px</option>
+                  <option value="15" selected>15 px (預設)</option>
+                  <option value="20">20 px</option>
+                  <option value="30">30 px</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="set_box_basic">
+              <div>
+                <label>容錯率 (Error Correction)</label>
+                <select id="qr_correct_level">
+                  <option value="L">L - 7% 修正能力</option>
+                  <option value="M">M - 15% 修正能力</option>
+                  <option value="Q">Q - 25% 修正能力</option>
+                  <option value="H" selected>H - 30% 修正能力 (適合放 Logo)</option>
+                </select>
+              </div>
+              <div>
+                <label>下載檔案格式 (Format)</label>
+                <select id="qr_format">
+                  <option value="png" selected>PNG 格式</option>
+                  <option value="jpg">JPG 格式</option>
+                  <option value="webp">WebP 格式</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Buttons -->
+            <div class="btn-group">
+              <button class="primary" id="btn_generate"><i class="fa-solid fa-wand-magic-sparkles"></i> 產生 QR Code</button>
+              <button id="btn_sample"><i class="fa-solid fa-vial"></i> 載入範例</button>
+              <button id="btn_clear"><i class="fa-solid fa-trash-can"></i> 清空</button>
+            </div>
+
+          </div>
+
+          <!-- Right Column: Result Preview -->
+          <div class="result">
+            <h4>
+              <span><i class="fa-solid fa-image"></i> 即時預覽 (Preview)</span>
+            </h4>
+            <div>
+              <div id="qr_wrapper">
+                <div id="qr_code"></div>
+                <div class="logo-overlay" id="logo_overlay">
+                  <img id="logo_img" src="" alt="Logo">
+                </div>
+              </div>
+
+              <!-- Action Buttons for Output -->
+              <div class="btn-group" style="width: 100%; margin-top: 10px;">
+                <button id="btn_download_png"><i class="fa-solid fa-download"></i> 下載圖片</button>
+                <button id="btn_copy_img"><i class="fa-solid fa-copy"></i> 複製圖片</button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- CARD 2: Logo Embed Upload & Settings -->
+      <div class="card logo-card">
+        <h3><i class="fa-solid fa-icons"></i> 中央圖示 / Logo 疊加與樣式 (選用)</h3>
+        <div class="card_cont">
+          <div class="drop-zone span-2" id="drop_zone">
+            <i class="fa-solid fa-cloud-arrow-up"></i>
+            <p>點擊上傳或拖曳圖片 (PNG / JPG / SVG) 作為中央 Logo</p>
+            <input type="file" id="file_input" accept="image/*" style="display: none;">
+          </div>
+          <div id="logo_info" class="options-row" style="display: none;">
+            <span id="logo_name" style="color: var(--accent);">已選擇檔案: logo.png</span>
+            <button id="btn_remove_logo" style="padding: 4px 10px; font-size: 0.8rem;"><i class="fa-solid fa-xmark"></i> 移除 Logo</button>
+          </div>
+
+          <!-- Logo Styling Controls (Visible when logo uploaded) -->
+          <div class="span-2 set_box_basic" id="logo_style_options" style="display: none; border-top: 1px dashed var(--border); padding-top: 15px; margin-top: 10px;">
+            <div>
+              <label>Logo 佔比尺寸 (Size)</label>
+              <select id="logo_size_percent">
+                <option value="0.15">小 (15%)</option>
+                <option value="0.20" selected>標準 (20%)</option>
+                <option value="0.25">大 (25%)</option>
+                <option value="0.30">特大 (30%)</option>
+              </select>
+            </div>
+            <div>
+              <label>Logo 形狀 (Shape)</label>
+              <select id="logo_shape">
+                <option value="rounded" selected>圓角矩形 (Rounded)</option>
+                <option value="circle">正圓形 (Circle)</option>
+                <option value="square">方形 (Square)</option>
+                <option value="transparent">無背景 (Transparent)</option>
+              </select>
+            </div>
+            <div>
+              <label>Logo 背景顏色 (Background)</label>
+              <input type="color" id="logo_bg_color" value="#ffffff">
+            </div>
+            <div>
+              <label>Logo 外圍邊距 (Padding)</label>
+              <select id="logo_padding">
+                <option value="2">小 (2px)</option>
+                <option value="4" selected>中 (4px)</option>
+                <option value="8">大 (8px)</option>
+                <option value="0">無邊距 (0px)</option>
+              </select>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toast">已複製到剪貼簿！</div>
+
+  <script>
+    // ==========================================
+    // Toast Notification Function
+    // ==========================================
+    function showToast(msg) {
+      const $toast = $('#toast');
+      $toast.text(msg).stop(true, true).fadeIn(200).delay(2000).fadeOut(300);
+    }
+
+    // Global QR Instance & Logo Variable
+    let qrcodeInstance = null;
+    let customLogoDataUrl = null;
+
+    // Get Error Correction Level Enum
+    function getErrorCorrectionLevel(levelStr) {
+      switch (levelStr) {
+        case 'L': return QRCode.CorrectLevel.L;
+        case 'M': return QRCode.CorrectLevel.M;
+        case 'Q': return QRCode.CorrectLevel.Q;
+        case 'H': return QRCode.CorrectLevel.H;
+        default: return QRCode.CorrectLevel.M;
+      }
+    }
+
+    // Build Payload string based on active tab
+    function buildQRPayload() {
+      const type = $('#qr_type').val();
+
+      if (type === 'text') {
+        return $('#input_text').val().trim();
+      } 
+      else if (type === 'wifi') {
+        const ssid = $('#wifi_ssid').val().trim();
+        const pass = $('#wifi_pass').val();
+        const enc = $('#wifi_enc').val();
+        const hidden = $('#wifi_hidden').is(':checked') ? 'true' : 'false';
+        if (!ssid) return '';
+        return `WIFI:S:${ssid};T:${enc};P:${pass};H:${hidden};;`;
+      } 
+      else if (type === 'email') {
+        const to = $('#email_to').val().trim();
+        const sub = $('#email_sub').val().trim();
+        const body = $('#email_body').val().trim();
+        if (!to) return '';
+        let url = `mailto:${to}`;
+        const params = [];
+        if (sub) params.push(`subject=${encodeURIComponent(sub)}`);
+        if (body) params.push(`body=${encodeURIComponent(body)}`);
+        if (params.length > 0) url += '?' + params.join('&');
+        return url;
+      } 
+      else if (type === 'sms') {
+        const mode = $('#sms_mode').val();
+        const phone = $('#sms_phone').val().trim();
+        const body = $('#sms_body').val().trim();
+        if (!phone) return '';
+        if (mode === 'tel') return `tel:${phone}`;
+        return body ? `sms:${phone}?body=${encodeURIComponent(body)}` : `sms:${phone}`;
+      } 
+      else if (type === 'vcard') {
+        const name = $('#vcard_name').val().trim();
+        const phone = $('#vcard_phone').val().trim();
+        const email = $('#vcard_email').val().trim();
+        const org = $('#vcard_org').val().trim();
+
+        if (!name && !phone && !email) return '';
+
+        let vcard = 'BEGIN:VCARD\nVERSION:3.0\n';
+        if (name) vcard += `N:${name};;;;\nFN:${name}\n`;
+        if (org) vcard += `ORG:${org}\n`;
+        if (phone) vcard += `TEL;TYPE=CELL:${phone}\n`;
+        if (email) vcard += `EMAIL:${email}\n`;
+        vcard += 'END:VCARD';
+        return vcard;
+      }
+
+      return '';
+    }
+
+    // Draw Rounded Rectangle Helper for Canvas
+    function drawRoundRect(ctx, x, y, width, height, radius, fill, stroke) {
+      ctx.beginPath();
+      ctx.moveTo(x + radius, y);
+      ctx.lineTo(x + width - radius, y);
+      ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+      ctx.lineTo(x + width, y + height - radius);
+      ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+      ctx.lineTo(x + radius, y + height);
+      ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+      ctx.lineTo(x, y + radius);
+      ctx.quadraticCurveTo(x, y, x + radius, y);
+      ctx.closePath();
+      if (fill) ctx.fill();
+      if (stroke) ctx.stroke();
+    }
+
+    // Generate / Render QR Code
+    function generateQRCode() {
+      const payload = buildQRPayload();
+      const $qrContainer = $('#qr_code');
+      $qrContainer.empty();
+
+      if (!payload) {
+        showToast('請填寫必要的資訊以產生 QR Code！');
+        return;
+      }
+
+      const size = parseInt($('#qr_size').val(), 10);
+      const darkColor = $('#qr_color_dark').val();
+      const lightColor = $('#qr_color_light').val();
+      const correctLevel = getErrorCorrectionLevel($('#qr_correct_level').val());
+
+      // Update Wrapper Background Color
+      $('#qr_wrapper').css('background-color', lightColor);
+
+      // Create QR Code
+      qrcodeInstance = new QRCode(document.getElementById('qr_code'), {
+        text: payload,
+        width: size,
+        height: size,
+        colorDark: darkColor,
+        colorLight: lightColor,
+        correctLevel: correctLevel
+      });
+
+      // Render Overlay on next tick after QRCode DOM render
+      setTimeout(() => {
+        if (customLogoDataUrl) {
+          const $renderedEl = $('#qr_code canvas').length ? $('#qr_code canvas') : $('#qr_code img');
+          const displayWidth = $renderedEl.width() || size;
+          const sizePercent = parseFloat($('#logo_size_percent').val() || 0.20);
+          
+          // Calculate Overlay dimensions proportional to preview container size
+          const logoDisplaySize = Math.max(16, Math.floor(displayWidth * sizePercent));
+          const shape = $('#logo_shape').val();
+          const logoBg = $('#logo_bg_color').val();
+          const padding = parseInt($('#logo_padding').val(), 10) * (displayWidth / size);
+
+          let borderRadius = '8px';
+          if (shape === 'circle') borderRadius = '50%';
+          else if (shape === 'square') borderRadius = '0px';
+          else if (shape === 'rounded') borderRadius = '8px';
+
+          $('#logo_img').attr('src', customLogoDataUrl).css({
+            'width': logoDisplaySize + 'px',
+            'height': logoDisplaySize + 'px',
+            'border-radius': shape === 'circle' ? '50%' : '0'
+          });
+
+          $('#logo_overlay').css({
+            'width': (logoDisplaySize + padding * 2) + 'px',
+            'height': (logoDisplaySize + padding * 2) + 'px',
+            'background': shape === 'transparent' ? 'transparent' : logoBg,
+            'padding': padding + 'px',
+            'border-radius': borderRadius,
+            'box-shadow': shape === 'transparent' ? 'none' : '0 2px 8px rgba(0, 0, 0, 0.2)'
+          }).show();
+
+        } else {
+          $('#logo_overlay').hide();
+        }
+      }, 50);
+    }
+
+    // Canvas Renderer to Merge QR Code, Margin, and Overlay Logo into Canvas for Export
+    function getMergedCanvas(callback) {
+      const $canvas = $('#qr_code canvas');
+      const $img = $('#qr_code img');
+
+      let sourceCanvas = null;
+
+      if ($canvas.length > 0) {
+        sourceCanvas = $canvas[0];
+      } else if ($img.length > 0) {
+        const imgEl = $img[0];
+        const cvs = document.createElement('canvas');
+        cvs.width = imgEl.naturalWidth || imgEl.width;
+        cvs.height = imgEl.naturalHeight || imgEl.height;
+        const ctx = cvs.getContext('2d');
+        ctx.drawImage(imgEl, 0, 0);
+        sourceCanvas = cvs;
+      }
+
+      if (!sourceCanvas) {
+        showToast('尚未產生 QR Code 圖片');
+        return;
+      }
+
+      const margin = parseInt($('#qr_margin').val(), 10);
+      const lightColor = $('#qr_color_light').val();
+
+      // Create target canvas including margin
+      const targetCanvas = document.createElement('canvas');
+      targetCanvas.width = sourceCanvas.width + (margin * 2);
+      targetCanvas.height = sourceCanvas.height + (margin * 2);
+      const ctx = targetCanvas.getContext('2d');
+
+      // 1. Fill background with light color (Margin area & JPG transparency fix)
+      ctx.fillStyle = lightColor;
+      ctx.fillRect(0, 0, targetCanvas.width, targetCanvas.height);
+
+      // 2. Draw Base QR Code centered
+      ctx.drawImage(sourceCanvas, margin, margin);
+
+      // 3. If Logo exists, draw custom styled logo centered onto target canvas
+      if (customLogoDataUrl) {
+        const logo = new Image();
+        logo.onload = function () {
+          const sizePercent = parseFloat($('#logo_size_percent').val() || 0.20);
+          const logoSize = Math.floor(sourceCanvas.width * sizePercent);
+          const x = margin + (sourceCanvas.width - logoSize) / 2;
+          const y = margin + (sourceCanvas.height - logoSize) / 2;
+
+          const shape = $('#logo_shape').val();
+          const logoBg = $('#logo_bg_color').val();
+          const pad = parseInt($('#logo_padding').val(), 10) * (sourceCanvas.width / 512); // Scale padding with base size
+
+          // Draw Logo Background Mask/Shape
+          if (shape !== 'transparent') {
+            ctx.fillStyle = logoBg;
+
+            if (shape === 'circle') {
+              ctx.beginPath();
+              ctx.arc(x + logoSize / 2, y + logoSize / 2, (logoSize / 2) + pad, 0, Math.PI * 2);
+              ctx.fill();
+            } else if (shape === 'square') {
+              ctx.fillRect(x - pad, y - pad, logoSize + pad * 2, logoSize + pad * 2);
+            } else { // rounded
+              const r = Math.floor((logoSize + pad * 2) * 0.15);
+              drawRoundRect(ctx, x - pad, y - pad, logoSize + pad * 2, logoSize + pad * 2, r, true, false);
+            }
+          }
+
+          // Clip Logo if shape is Circle
+          ctx.save();
+          if (shape === 'circle') {
+            ctx.beginPath();
+            ctx.arc(x + logoSize / 2, y + logoSize / 2, logoSize / 2, 0, Math.PI * 2);
+            ctx.clip();
+          }
+
+          // Draw Logo Image
+          ctx.drawImage(logo, x, y, logoSize, logoSize);
+          ctx.restore();
+
+          callback(targetCanvas);
+        };
+        logo.src = customLogoDataUrl;
+      } else {
+        callback(targetCanvas);
+      }
+    }
+
+    // ==========================================
+    // Event Bindings & Actions
+    // ==========================================
+    $(document).ready(function () {
+
+      // Type Switcher
+      $('#qr_type').on('change', function () {
+        const type = $(this).val();
+        $('.tab-content').removeClass('active');
+        $(`#tab_${type}`).addClass('active');
+      });
+
+      $('#sms_mode').on('change', function () {
+        if ($(this).val() === 'tel') {
+          $('#sms_body_box').hide();
+        } else {
+          $('#sms_body_box').show();
+        }
+      });
+
+      // Live Update triggers for inputs/options
+      $('#qr_color_dark, #qr_color_light, #qr_size, #qr_margin, #qr_correct_level, #logo_size_percent, #logo_shape, #logo_bg_color, #logo_padding').on('change input', function () {
+        if ($('#qr_code').children().length > 0) {
+          generateQRCode();
+        }
+      });
+
+      // Window resize listener to keep overlay proportional
+      $(window).on('resize', function () {
+        if (customLogoDataUrl && $('#qr_code').children().length > 0) {
+          generateQRCode();
+        }
+      });
+
+      // Generate Action
+      $('#btn_generate').on('click', function () {
+        generateQRCode();
+        showToast('已產生 QR Code！');
+      });
+
+      // Sample Data Loader
+      $('#btn_sample').on('click', function () {
+        const type = $('#qr_type').val();
+
+        if (type === 'text') {
+          $('#input_text').val('https://github.com');
+        } else if (type === 'wifi') {
+          $('#wifi_ssid').val('Toolkit_Guest_WiFi');
+          $('#wifi_pass').val('SecurePass2026');
+          $('#wifi_enc').val('WPA');
+        } else if (type === 'email') {
+          $('#email_to').val('contact@example.com');
+          $('#email_sub').val('工具箱諮詢');
+          $('#email_body').val('您好，我想瞭解更多關於 QR Code 工具的資訊。');
+        } else if (type === 'sms') {
+          $('#sms_mode').val('sms').trigger('change');
+          $('#sms_phone').val('+886912345678');
+          $('#sms_body').val('你好，這是一條測試訊息！');
+        } else if (type === 'vcard') {
+          $('#vcard_name').val('王大明');
+          $('#vcard_phone').val('0912345678');
+          $('#vcard_email').val('daming@example.com');
+          $('#vcard_org').val('創新科技有限公司');
+        }
+
+        generateQRCode();
+        showToast('已載入範例資料！');
+      });
+
+      // Clear Action
+      $('#btn_clear').on('click', function () {
+        $('input[type="text"], input[type="email"], input[type="tel"], textarea').val('');
+        $('#qr_code').empty();
+        $('#logo_overlay').hide();
+        showToast('內容已清空');
+      });
+
+      // Download Action (Supports PNG, JPG, WebP)
+      $('#btn_download_png').on('click', function () {
+        const format = $('#qr_format').val(); // png, jpg, webp
+        let mimeType = 'image/png';
+        let ext = 'png';
+
+        if (format === 'jpg') {
+          mimeType = 'image/jpeg';
+          ext = 'jpg';
+        } else if (format === 'webp') {
+          mimeType = 'image/webp';
+          ext = 'webp';
+        }
+
+        getMergedCanvas(function (canvas) {
+          const dataUrl = canvas.toDataURL(mimeType, 0.92);
+          const a = document.createElement('a');
+          a.href = dataUrl;
+          a.download = `qrcode_${Date.now()}.${ext}`;
+          a.click();
+          showToast(`已開始下載 QR Code (${ext.toUpperCase()})！`);
+        });
+      });
+
+      // Copy Image Action
+      $('#btn_copy_img').on('click', function () {
+        getMergedCanvas(function (canvas) {
+          try {
+            canvas.toBlob(function (blob) {
+              if (!blob) {
+                showToast('無法建立圖片 Blob');
+                return;
+              }
+              if (navigator.clipboard && window.ClipboardItem) {
+                const item = new ClipboardItem({ 'image/png': blob });
+                navigator.clipboard.write([item]).then(function () {
+                  showToast('已複製 QR Code 圖片至剪貼簿！');
+                }).catch(function () {
+                  showToast('瀏覽器限制，不支援直接複製圖片');
+                });
+              } else {
+                showToast('您的瀏覽器不支援複製圖片功能');
+              }
+            }, 'image/png');
+          } catch (e) {
+            showToast('複製失敗: ' + e.message);
+          }
+        });
+      });
+
+      // Drag and Drop Logo Upload Handlers (Fixed Event Propagation)
+      const $dropZone = $('#drop_zone');
+      const $fileInput = $('#file_input');
+
+      $dropZone.on('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        $fileInput.val(''); // 清空舊值以允許再次選擇相同檔案
+        $fileInput.trigger('click');
+      });
+
+      $fileInput.on('click', function (e) {
+        e.stopPropagation(); // 阻止向上冒泡回 drop_zone 避免重複引發點擊
+      });
+
+      $dropZone.on('dragover dragenter', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        $dropZone.addClass('dragover');
+      });
+
+      $dropZone.on('dragleave drop', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        $dropZone.removeClass('dragover');
+      });
+
+      $dropZone.on('drop', function (e) {
+        const files = e.originalEvent.dataTransfer.files;
+        if (files.length > 0) handleLogoFile(files[0]);
+      });
+
+      $fileInput.on('change', function (e) {
+        if (e.target.files.length > 0) handleLogoFile(e.target.files[0]);
+      });
+
+      function handleLogoFile(file) {
+        if (!file.type.startsWith('image/')) {
+          showToast('請上傳有效的圖片檔案！');
+          return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          customLogoDataUrl = e.target.result;
+          $('#logo_name').text(`已載入 Logo: ${file.name}`);
+          $dropZone.removeClass('span-2');
+          $('#logo_info').show();
+          $('#logo_style_options').show();
+          
+
+          // Auto switch to high error correction level for logo capability
+          $('#qr_correct_level').val('H');
+
+          generateQRCode();
+          showToast('Logo 上傳成功！已建議切換容錯率至 H 級。');
+        };
+        reader.readAsDataURL(file);
+      }
+
+      // Remove Logo
+      $('#btn_remove_logo').on('click', function () {
+        customLogoDataUrl = null;
+        $fileInput.val('');
+        $('#logo_info').hide();
+        $('#logo_style_options').hide();
+        $('#logo_overlay').hide();
+        generateQRCode();
+        showToast('已移除 Logo');
+      });
+
+      // Initial Default Sample Generation
+      $('#input_text').val('https://example.com');
+      generateQRCode();
+    });
+  </script>
+</body>
+
+</html>
