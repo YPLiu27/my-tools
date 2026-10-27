@@ -89,7 +89,7 @@
     .file-list {
       margin-top: 15px;
       text-align: left;
-      max-height: 150px;
+      max-height: 180px;
       overflow-y: auto;
       border: 1px solid var(--border);
       border-radius: 8px;
@@ -101,7 +101,19 @@
       border-bottom: 1px solid var(--border);
       display: flex;
       justify-content: space-between;
+      align-items: center;
       font-size: 13px;
+    }
+
+    .file-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .file-size {
+      font-size: 11px;
+      color: var(--text-dim, #888);
     }
 
     button {
@@ -134,7 +146,7 @@
       color: #856404;
     }
 
-    .container >h2+p{
+    .container > h2 + p {
       margin-bottom: 20px;
     }
   </style>
@@ -154,9 +166,7 @@
 
     <div class="controls">
       <label style="font-size: 14px;">品質</label>
-      <!-- 確保 id 是 quality -->
       <input type="range" id="quality" min="0.1" max="1.0" step="0.01" value="0.85">
-      <!-- 確保 id 是 qualityValue -->
       <span id="qualityValue">85%</span>
     </div>
 
@@ -167,6 +177,24 @@
 </div>
 
 <script>
+  // --- 格式化檔案大小的輔助函式 ---
+  function formatBytes(bytes) {
+    if (bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+  }
+
+  // --- 取得當日日期格式 (YYYYMMDD) ---
+  function getFormattedDate() {
+    const d = new Date();
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}${month}${day}`;
+  }
+
   // --- 轉檔邏輯 ---
   const fileInput = document.getElementById('fileInput');
   const dropZone = document.getElementById('drop-zone');
@@ -186,11 +214,14 @@
   function handleFiles(files) {
     selectedFiles = Array.from(files);
     if (selectedFiles.length > 0) {
-      fileList.innerHTML = selectedFiles.map(f => {
+      fileList.innerHTML = selectedFiles.map((f, index) => {
         const isHeic = f.name.toLowerCase().endsWith('.heic');
-        return `<div class="file-item">
-                  <span>${f.name}</span>
-                  <span class="status-tag ${isHeic ? 'heic-tag' : ''}">${isHeic ? 'HEIC 待轉換' : '待處理'}</span>
+        return `<div class="file-item" data-index="${index}">
+                  <div class="file-info">
+                    <span>${f.name}</span>
+                    <span class="file-size">原始大小: ${formatBytes(f.size)}</span>
+                  </div>
+                  <span class="status-tag ${isHeic ? 'heic-tag' : ''}" id="status-${index}">${isHeic ? 'HEIC 待轉換' : '待處理'}</span>
               </div>`;
       }).join('');
       fileList.style.display = 'block';
@@ -212,51 +243,58 @@
     const zip = new JSZip();
     const quality = parseFloat(document.getElementById('quality').value);
 
-    for (let file of selectedFiles) {
+    for (let i = 0; i < selectedFiles.length; i++) {
+        const file = selectedFiles[i];
+        const statusTag = document.getElementById(`status-${i}`);
+        
         try {
             let imageSource;
-            // 1. HEIC 預處理
             if (file.name.toLowerCase().endsWith('.heic')) {
-                // heic2any 轉為 jpeg 時建議品質給高一點，避免第一次轉檔就失真
                 const convertedBlob = await heic2any({ blob: file, toType: "image/jpeg", quality: 0.95 });
                 imageSource = Array.isArray(convertedBlob) ? convertedBlob[0] : convertedBlob;
             } else {
                 imageSource = file;
             }
 
-            // 2. 轉為 ImageBitmap (這比 new Image() 快且能減少記憶體消耗)
             const img = await createImageBitmap(imageSource);
             
-            // 3. 畫布設定
             canvas.width = img.width;
             canvas.height = img.height;
 
-            // 4. 清除畫布並設定高品質縮放
             ctx.clearRect(0, 0, canvas.width, canvas.height); 
             ctx.imageSmoothingEnabled = true;
             ctx.imageSmoothingQuality = 'high';
-
-            // 5. 【修正重點】只畫一次，並確保完整覆蓋畫布
             ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
-            // 6. 輸出 WebP
-            // 注意：若來源是 PNG 且有透明度，品質參數對透明區域影響較小，但對色彩區域影響很大
             const webpBlob = await new Promise(res => canvas.toBlob(res, 'image/webp', quality));
             
             const newName = file.name.replace(/\.[^/.]+$/, "") + ".webp";
             zip.file(newName, webpBlob);
 
-            // 釋放記憶體
+            // 即時更新清單中轉檔後的檔案大小與成功狀態
+            if (statusTag) {
+                statusTag.innerText = `已轉 WebP (${formatBytes(webpBlob.size)})`;
+                statusTag.style.background = '#d1e7dd';
+                statusTag.style.color = '#0f5132';
+            }
+
             img.close(); 
         } catch (err) {
             console.error("檔案處理失敗:", file.name, err);
+            if (statusTag) {
+                statusTag.innerText = '失敗';
+                statusTag.style.background = '#f8d7da';
+                statusTag.style.color = '#842029';
+            }
         }
     }
 
     const content = await zip.generateAsync({ type: "blob" });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(content);
-    link.download = "webp_images_collection.zip";
+    
+    // 下載檔名自動帶入當日日期 (例如: webp_images_20261027.zip)
+    link.download = `webp_images_${getFormattedDate()}.zip`;
     link.click();
 
     convertBtn.innerText = '開始轉檔並下載 ZIP';
