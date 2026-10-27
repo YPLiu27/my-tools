@@ -49,6 +49,9 @@
       max-width: 500px;
       text-align: center;
       border: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      gap: min(15px,3.5vw);
     }
 
     #drop-zone {
@@ -57,7 +60,7 @@
       padding: 40px 20px;
       cursor: pointer;
       background: var(--drop-bg);
-      margin: 20px 0;
+      /* margin: 20px 0; */
       transition: 0.3s;
     }
 
@@ -67,7 +70,7 @@
     }
 
     .controls {
-      margin: 20px 0;
+      /* margin: 20px 0; */
       background: var(--drop-bg);
       padding: 15px;
       border-radius: 10px;
@@ -87,7 +90,7 @@
     }
 
     .file-list {
-      margin-top: 15px;
+      /* margin-top: 15px; */
       text-align: left;
       max-height: 180px;
       overflow-y: auto;
