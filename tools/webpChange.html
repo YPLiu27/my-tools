@@ -127,12 +127,19 @@
       flex-shrink: 0;
     }
 
-    .dl-btn {
+    .dl-btn,
+    .del-btn {
       width: auto;
       padding: 4px 10px;
       font-size: 11px;
       font-weight: normal;
       border-radius: 6px;
+    }
+
+    .del-btn {
+      background: transparent;
+      color: #888;
+      border: 1px solid var(--border);
     }
 
     .file-size {
@@ -250,8 +257,21 @@
     entries = picked.map(f => ({
       file: f,
       isHeic: f.name.toLowerCase().endsWith('.heic'),
-      source: null, blob: null, done: false, failed: false
+      source: null, blob: null, done: false, failed: false, q: null
     }));
+
+    renderList();
+    estimateAll();
+  }
+
+  // 依 entries 重新產生整份清單（刪除後索引會變動，所以整份重畫）
+  function renderList() {
+    if (entries.length === 0) {
+      fileList.innerHTML = '';
+      fileList.style.display = 'none';
+      convertBtn.disabled = true;
+      return;
+    }
 
     fileList.innerHTML = entries.map((en, index) => {
       return `<div class="file-item" data-index="${index}">
@@ -262,12 +282,19 @@
                 <div class="file-right">
                   <span class="status-tag ${en.isHeic ? 'heic-tag' : ''}" id="status-${index}">${en.isHeic ? 'HEIC 待轉換' : '待處理'}</span>
                   <button class="dl-btn" data-index="${index}">下載</button>
+                  <button class="del-btn" data-index="${index}" title="從清單移除" aria-label="從清單移除"><i class="fa-solid fa-trash-can"></i></button>
                 </div>
             </div>`;
     }).join('');
     fileList.style.display = 'block';
     convertBtn.disabled = false;
-    estimateAll();
+
+    // 重畫後把既有狀態補回去
+    entries.forEach((en, i) => {
+      if (en.failed) markStatus(i, '失敗', '#f8d7da', '#842029');
+      else if (en.done) markStatus(i, '已轉 WebP', '#d1e7dd', '#0f5132');
+      renderSize(i, en);
+    });
   }
 
   // --- 滑桿 / 數字框雙向連動 ---
@@ -327,6 +354,7 @@
     ctx.imageSmoothingQuality = 'high';
     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
     en.blob = await new Promise(res => canvas.toBlob(res, 'image/webp', quality));
+    en.q = quality;
     img.close();
     return en.blob;
   }
@@ -349,6 +377,7 @@
     for (let i = 0; i < entries.length; i++) {
       const en = entries[i];
       if (en.isHeic && !en.source) continue; // 尚未解過的 HEIC 不預估
+      if (en.blob && en.q === getQuality()) { renderSize(i, en); continue; }  // 這個品質已經算過
       en.done = false;
       try {
         await convertEntry(en, getQuality());
@@ -362,8 +391,19 @@
     }
   }
 
-  // --- 單張下載：已轉好就直接存，沒轉好就當場轉這一張 ---
   fileList.onclick = async (e) => {
+    // 從清單移除（轉檔進行中不開放）
+    const del = e.target.closest('.del-btn');
+    if (del) {
+      if (convertBtn.disabled) return;
+      entries.splice(Number(del.dataset.index), 1);
+      runToken++;               // 中止進行中的預估，避免索引對不上
+      renderList();
+      estimateAll();
+      return;
+    }
+
+    // --- 單張下載：已轉好就直接存，沒轉好就當場轉這一張 ---
     const btn = e.target.closest('.dl-btn');
     if (!btn) return;
     const i = Number(btn.dataset.index);

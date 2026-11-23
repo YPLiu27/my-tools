@@ -113,12 +113,19 @@
       flex-shrink: 0;
     }
 
-    .dl-btn {
+    .dl-btn,
+    .del-btn {
       width: auto;
       padding: 4px 10px;
       font-size: 11px;
       font-weight: normal;
       border-radius: 6px;
+    }
+
+    .del-btn {
+      background: transparent;
+      color: #888;
+      border: 1px solid var(--border);
     }
 
     button {
@@ -245,23 +252,50 @@
       const picked = Array.from(files).filter(f => f.type.match('image.*'));
       if (picked.length === 0) return;
 
-      entries = picked.map(f => ({ file: f, bitmap: null, blob: null, done: false }));
+      entries = picked.map(f => ({ file: f, bitmap: null, blob: null, done: false, q: null }));
+      renderList();
+      estimateAll();
+    }
+
+    // 依 entries 重新產生整份清單（刪除後索引會變動，所以整份重畫）
+    function renderList() {
+      if (entries.length === 0) {
+        fileList.innerHTML = '';
+        fileList.style.display = 'none';
+        compBtn.disabled = true;
+        return;
+      }
+
       fileList.innerHTML = entries.map((en, i) => `
                 <div class="file-item">
                     <span class="file-name">${en.file.name}</span>
                     <span class="file-right">
                         <span class="size-info" id="size-${i}">${formatSize(en.file.size)} → 計算中…</span>
                         <button class="dl-btn" data-i="${i}">下載</button>
+                        <button class="del-btn" data-i="${i}" title="從清單移除" aria-label="從清單移除"><i class="fa-solid fa-trash-can"></i></button>
                     </span>
                 </div>
             `).join('');
       fileList.style.display = 'block';
       compBtn.disabled = false;
-      estimateAll();
+      entries.forEach((en, i) => { if (en.blob) renderSize(i, en); });
     }
 
-    // 點單張下載：已算好就直接下載，還沒算好就當場壓這一張
     fileList.onclick = async (e) => {
+      // 從清單移除（壓縮進行中不開放）
+      const del = e.target.closest('.del-btn');
+      if (del) {
+        if (compBtn.disabled) return;
+        const en = entries[Number(del.dataset.i)];
+        if (en && en.bitmap) en.bitmap.close();
+        entries.splice(Number(del.dataset.i), 1);
+        runToken++;               // 中止進行中的預估，避免索引對不上
+        renderList();
+        estimateAll();
+        return;
+      }
+
+      // 點單張下載：已算好就直接下載，還沒算好就當場壓這一張
       const btn = e.target.closest('.dl-btn');
       if (!btn) return;
       const en = entries[Number(btn.dataset.i)];
@@ -292,6 +326,7 @@
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.drawImage(en.bitmap, 0, 0);
       en.blob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', quality));
+      en.q = quality;
       return en.blob;
     }
 
@@ -311,6 +346,7 @@
 
       for (let i = 0; i < entries.length; i++) {
         const en = entries[i];
+        if (en.blob && en.q === quality) { renderSize(i, en); continue; }  // 這個品質已經算過
         en.done = false;
         await compressEntry(en, quality);
         if (token !== runToken) return;

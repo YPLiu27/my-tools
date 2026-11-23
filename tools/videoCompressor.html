@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>影片壓縮工具 - 工具箱</title>
+  <script src="../js/jquery-3.3.1.min.js"></script>
+  <script src="../js/main.js"></script>
+  <link rel="stylesheet" href="../css/root.css">
+  <link rel="stylesheet" href="../fonts/css/all.css">
+  <style>
+    .container {
+      max-width: 720px;
+    }
+
+    .card {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    #drop-zone {
+      border: 2px dashed var(--border);
+      border-radius: 12px;
+      padding: 40px 20px;
+      cursor: pointer;
+      background: var(--drop-bg);
+      transition: 0.3s;
+    }
+
+    #drop-zone:hover,
+    #drop-zone.dragover {
+      border-color: var(--primary);
+      background: #3b82f61a;
+    }
+
+    #drop-zone .sub {
+      font-size: 12px;
+      color: #888;
+      margin-top: 5px;
+    }
+
+    .controls {
+      background: var(--drop-bg);
+      padding: 15px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      text-align: left;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .preset-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      font-size: 14px;
+    }
+
+    .seg {
+      display: flex;
+      gap: 6px;
+      flex: 1;
+      min-width: 200px;
+    }
+
+    .seg button {
+      flex: 1;
+      width: auto;
+      padding: 8px 6px;
+      font-size: 13px;
+      font-weight: normal;
+      background: var(--card-bg);
+      color: var(--text-main);
+      border: 1px solid var(--border);
+    }
+
+    .seg button.active {
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+      font-weight: bold;
+    }
+
+    details summary {
+      cursor: pointer;
+      font-size: 13px;
+      color: #888;
+    }
+
+    .adv-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    .adv-grid label {
+      display: block;
+      font-size: 12px;
+      color: #888;
+      margin-bottom: 4px;
+    }
+
+    .adv-grid input,
+    .adv-grid select {
+      width: 100%;
+      padding: 8px 10px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--card-bg);
+      color: var(--text-main);
+      font-size: 14px;
+      font-family: inherit;
+    }
+
+    .hint {
+      font-size: 11px;
+      color: #888;
+      line-height: 1.6;
+    }
+
+    .file-list {
+      text-align: left;
+      max-height: 320px;
+      overflow-y: auto;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      display: none;
+    }
+
+    .file-item {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+    }
+
+    .file-item:last-child {
+      border-bottom: none;
+    }
+
+    .file-info {
+      flex: 1 1 160px;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .file-name {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .file-meta,
+    .file-size {
+      font-size: 11px;
+      color: #888;
+    }
+
+    .bar {
+      height: 4px;
+      border-radius: 4px;
+      background: var(--border);
+      overflow: hidden;
+      display: none;
+    }
+
+    .bar i {
+      display: block;
+      height: 100%;
+      width: 0;
+      background: var(--primary);
+      transition: width 0.2s linear;
+    }
+
+    .file-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .row-btn {
+      width: auto;
+      padding: 5px 10px;
+      font-size: 11px;
+      font-weight: normal;
+      border-radius: 6px;
+    }
+
+    .row-btn:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    .row-btn.del {
+      background: transparent;
+      color: #888;
+      border: 1px solid var(--border);
+    }
+
+    #btnAll:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    @media (max-width:480px) {
+      .adv-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="container">
+    <h2><i class="fa-solid fa-film"></i> 影片壓縮工具</h2>
+    <p style="font-size: 14px; color: #888; margin-bottom: 20px;">用瀏覽器內建編碼器重新壓縮，檔案不會上傳到任何伺服器</p>
+
+    <div class="card">
+
+      <div id="drop-zone">
+        <p>拖曳影片至此，或點擊選擇</p>
+        <p class="sub">可一次選多支，支援 MP4 / MOV / WebM 等瀏覽器可播放的格式</p>
+        <input type="file" id="fileInput" multiple accept="video/*" hidden>
+      </div>
+
+      <div class="controls">
+        <div class="preset-row">
+          <span>壓縮品質</span>
+          <div class="seg" id="presetSeg">
+            <button type="button" data-preset="high">高品質</button>
+            <button type="button" data-preset="medium" class="active">中等</button>
+            <button type="button" data-preset="low">高壓縮</button>
+          </div>
+        </div>
+
+        <details>
+          <summary>進階設定（位元率 / 解析度）</summary>
+          <div class="adv-grid">
+            <div>
+              <label for="bitrate">目標位元率 (kbps)</label>
+              <input type="number" id="bitrate" min="100" max="50000" step="100" placeholder="自動（依品質檔位）">
+            </div>
+            <div>
+              <label for="resolution">輸出解析度</label>
+              <select id="resolution">
+                <option value="0">維持原始尺寸</option>
+                <option value="1080">1080p</option>
+                <option value="720">720p</option>
+                <option value="480">480p</option>
+              </select>
+            </div>
+          </div>
+        </details>
+
+        <p class="hint">
+          輸出格式：<span id="fmtLabel">檢查中…</span><br>
+          壓縮方式是「邊播放邊重新錄製」，所需時間約等於影片長度；處理中請勿切換分頁或讓電腦休眠，否則畫面會卡住。
+        </p>
+      </div>
+
+      <div class="file-list" id="fileList"></div>
+      <button id="btnAll" disabled>全部壓縮</button>
+    </div>
+  </div>
+
+  <script>
+    // ==========================================
+    // 基本設定
+    // ==========================================
+    // 位元率估算用：每像素每幀的位元數
+    const PRESET_BPP = { high: 0.10, medium: 0.05, low: 0.025 };
+    const ASSUMED_FPS = 30;
+    const AUDIO_BPS = 128000;
+    const MIN_VIDEO_BPS = 200000;
+
+    const MIME_CANDIDATES = [
+      { mime: 'video/mp4;codecs=avc1.42E01E,mp4a.40.2', ext: 'mp4', label: 'MP4 (H.264 / AAC)' },
+      { mime: 'video/mp4', ext: 'mp4', label: 'MP4' },
+      { mime: 'video/webm;codecs=vp9,opus', ext: 'webm', label: 'WebM (VP9 / Opus)' },
+      { mime: 'video/webm;codecs=vp8,opus', ext: 'webm', label: 'WebM (VP8 / Opus)' },
+      { mime: 'video/webm', ext: 'webm', label: 'WebM' }
+    ];
+
+    const OUTPUT = (function () {
+      if (!window.MediaRecorder) return null;
+      return MIME_CANDIDATES.find(c => MediaRecorder.isTypeSupported(c.mime)) || null;
+    })();
+
+    // entries: { file, url, width, height, duration, blob, status, canceled }
+    let entries = [];
+    let preset = 'medium';
+    let running = false;
+    let stopAll = false;
+    let current = null;   // 進行中的工作，供取消使用
+    let audioCtx = null;
+
+    // ==========================================
+    // 共用小工具
+    // ==========================================
+    function formatBytes(bytes) {
+      if (!bytes) return '0 B';
+      const k = 1024;
+      const sizes = ['B', 'KB', 'MB', 'GB'];
+      const i = Math.min(sizes.length - 1, Math.floor(Math.log(bytes) / Math.log(k)));
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(i === 0 ? 0 : 1)) + ' ' + sizes[i];
+    }
+
+    function formatTime(sec) {
+      if (!isFinite(sec)) return '--:--';
+      const s = Math.round(sec);
+      const m = Math.floor(s / 60);
+      return `${String(m).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
+    }
+
+    // 依設定算出這支影片的輸出尺寸（寬高都取偶數，編碼器要求）
+    function targetSize(w, h) {
+      const limit = parseInt($('#resolution').val(), 10);
+      let scale = 1;
+      if (limit > 0) {
+        const shortSide = Math.min(w, h);
+        if (shortSide > limit) scale = limit / shortSide;
+      }
+      return {
+        w: Math.max(2, Math.round(w * scale / 2) * 2),
+        h: Math.max(2, Math.round(h * scale / 2) * 2)
+      };
+    }
+
+    // 目標位元率：手動輸入優先，否則依品質檔位與輸出尺寸推算
+    function targetBitrate(outW, outH) {
+      const manual = parseInt($('#bitrate').val(), 10);
+      if (Number.isFinite(manual) && manual >= 100) return manual * 1000;
+      return Math.max(MIN_VIDEO_BPS, Math.round(outW * outH * ASSUMED_FPS * PRESET_BPP[preset]));
+    }
+
+    function estimateSize(en) {
+      if (!en.duration || !isFinite(en.duration)) return null;
+      const out = targetSize(en.width, en.height);
+      const bps = targetBitrate(out.w, out.h) + (en.hasAudio ? AUDIO_BPS : 0);
+      return Math.round(bps * en.duration / 8);
+    }
+
+    // ==========================================
+    // 畫面更新
+    // ==========================================
+    function renderRow(i) {
+      const en = entries[i];
+      const $item = $(`.file-item[data-i="${i}"]`);
+      if (!$item.length) return;
+
+      $item.find('.del').prop('disabled', running);
+
+      // 讀不到影像內容的檔案：直接標示不能壓縮
+      if (!en.width) {
+        $item.find('.file-meta').text(en.status === 'failed' ? '無法讀取影片內容，不能壓縮' : '讀取中…');
+        $item.find('.file-size').text(`原始 ${formatBytes(en.file.size)}`);
+        $item.find('.do, .dl').prop('disabled', true);
+        return;
+      }
+
+      const out = targetSize(en.width, en.height);
+      $item.find('.file-meta').text(
+        `${en.width}×${en.height} → ${out.w}×${out.h} · ${formatTime(en.duration)}${en.hasAudio ? '' : ' · 無音訊'}`
+      );
+
+      const head = `原始 ${formatBytes(en.file.size)} → `;
+      const $size = $item.find('.file-size');
+      if (en.status === 'failed') {
+        $size.text(head + '壓縮失敗');
+      } else if (en.blob) {
+        const ratio = Math.round((1 - en.blob.size / en.file.size) * 100);
+        $size.text(`${head}實際 ${formatBytes(en.blob.size)} (${ratio < 0 ? '+' : '-'}${Math.abs(ratio)}%)`);
+      } else {
+        const est = estimateSize(en);
+        if (est === null) {
+          $size.text(head + '長度未知，壓完才知道');
+        } else {
+          const ratio = Math.round((1 - est / en.file.size) * 100);
+          $size.text(`${head}預計 ${formatBytes(est)} (${ratio < 0 ? '+' : '-'}${Math.abs(ratio)}%)`);
+        }
+      }
+
+      $item.find('.dl').prop('disabled', !en.blob);
+      const $do = $item.find('.do');
+      if (en.status === 'running') {
+        $do.text('停止').prop('disabled', false);
+      } else {
+        $do.text(en.blob ? '重壓' : '壓縮').prop('disabled', running);
+      }
+    }
+
+    function renderAll() {
+      entries.forEach((_, i) => renderRow(i));
+      $('#btnAll').prop('disabled', entries.length === 0 && !running);
+    }
+
+    function setProgress(i, ratio) {
+      const $bar = $(`.file-item[data-i="${i}"] .bar`);
+      $bar.css('display', ratio === null ? 'none' : 'block');
+      if (ratio !== null) $bar.find('i').css('width', Math.min(100, Math.round(ratio * 100)) + '%');
+    }
+
+    // ==========================================
+    // 讀取檔案
+    // ==========================================
+    function handleFiles(files) {
+      const picked = Array.from(files).filter(f => f.type.startsWith('video/') || /\.(mp4|mov|m4v|webm|mkv|avi)$/i.test(f.name));
+      if (picked.length === 0) return;
+
+      picked.forEach(f => entries.push({
+        file: f, url: URL.createObjectURL(f),
+        width: 0, height: 0, duration: 0, hasAudio: false,
+        blob: null, status: 'pending', canceled: false
+      }));
+
+      renderList();
+      entries.forEach((en, i) => { if (!en.width) readMeta(en, i); });
+    }
+
+    // 依 entries 重新產生整份清單（刪除後索引會變動，所以整份重畫）
+    function renderList() {
+      if (entries.length === 0) {
+        $('#fileList').empty().hide();
+        $('#btnAll').prop('disabled', true);
+        return;
+      }
+
+      $('#fileList').html(entries.map((en, i) => `
+        <div class="file-item" data-i="${i}">
+          <div class="file-info">
+            <span class="file-name">${en.file.name}</span>
+            <span class="file-meta">讀取中…</span>
+            <span class="file-size">原始 ${formatBytes(en.file.size)}</span>
+            <div class="bar"><i></i></div>
+          </div>
+          <div class="file-right">
+            <button type="button" class="row-btn do">壓縮</button>
+            <button type="button" class="row-btn dl" disabled>下載</button>
+            <button type="button" class="row-btn del" title="從清單移除" aria-label="從清單移除"><i class="fa-solid fa-trash-can"></i></button>
+          </div>
+        </div>`).join('')).show();
+      $('#btnAll').prop('disabled', false);
+      renderAll();
+    }
+
+    function readMeta(en, i) {
+      const v = document.createElement('video');
+      v.preload = 'metadata';
+      v.muted = true;
+      v.src = en.url;
+      v.onloadedmetadata = () => {
+        en.width = v.videoWidth;
+        en.height = v.videoHeight;
+        en.duration = v.duration;
+        // 有沒有音軌：用 captureStream 問，問不到就當作有
+        try {
+          en.hasAudio = v.captureStream ? v.captureStream().getAudioTracks().length > 0 : true;
+        } catch (e) {
+          en.hasAudio = true;
+        }
+        if (!en.width) { en.status = 'failed'; }
+        renderRow(i);
+      };
+      v.onerror = () => {
+        en.status = 'failed';
+        renderRow(i);
+      };
+    }
+
+    // ==========================================
+    // 壓縮核心：播放 → 畫到 canvas → MediaRecorder 錄下來
+    // ==========================================
+    function compressEntry(en, i) {
+      return new Promise((resolve, reject) => {
+        if (!OUTPUT) { reject(new Error('這個瀏覽器不支援 MediaRecorder')); return; }
+
+        const video = document.createElement('video');
+        video.src = en.url;
+        video.playsInline = true;
+        video.preload = 'auto';
+
+        let rec = null;
+        let settled = false;
+        const cleanup = () => {
+          try { video.pause(); } catch (e) { }
+          video.removeAttribute('src');
+          video.load();
+        };
+        const fail = (err) => { if (settled) return; settled = true; cleanup(); reject(err); };
+
+        video.onerror = () => fail(new Error('影片無法讀取'));
+
+        video.onloadedmetadata = () => {
+          try {
+            const out = targetSize(video.videoWidth, video.videoHeight);
+            const canvas = document.createElement('canvas');
+            canvas.width = out.w;
+            canvas.height = out.h;
+            const ctx = canvas.getContext('2d');
+
+            const stream = new MediaStream(canvas.captureStream().getVideoTracks());
+
+            // 音訊走 Web Audio：接到 MediaStreamDestination 而不接喇叭，
+            // 這樣聲音會被錄進去，但處理過程不會外放。
+            if (en.hasAudio) {
+              if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+              if (audioCtx.state === 'suspended') audioCtx.resume();
+              const dest = audioCtx.createMediaStreamDestination();
+              audioCtx.createMediaElementSource(video).connect(dest);
+              dest.stream.getAudioTracks().forEach(t => stream.addTrack(t));
+            } else {
+              video.muted = true;
+            }
+
+            rec = new MediaRecorder(stream, {
+              mimeType: OUTPUT.mime,
+              videoBitsPerSecond: targetBitrate(out.w, out.h),
+              audioBitsPerSecond: AUDIO_BPS
+            });
+
+            const chunks = [];
+            rec.ondataavailable = (e) => { if (e.data && e.data.size) chunks.push(e.data); };
+            rec.onerror = (e) => fail((e && e.error) || new Error('錄製失敗'));
+            rec.onstop = () => {
+              if (settled) return;
+              settled = true;
+              cleanup();
+              if (en.canceled) { resolve(null); return; }
+              resolve(new Blob(chunks, { type: OUTPUT.mime }));
+            };
+
+            const drawFrame = () => {
+              ctx.drawImage(video, 0, 0, out.w, out.h);
+              setProgress(i, video.duration ? video.currentTime / video.duration : 0);
+              if (video.ended || en.canceled) return;
+              if (video.requestVideoFrameCallback) video.requestVideoFrameCallback(drawFrame);
+              else requestAnimationFrame(drawFrame);
+            };
+
+            video.onended = () => { if (rec && rec.state !== 'inactive') rec.stop(); };
+
+            rec.start(1000);
+            video.play().then(drawFrame).catch(fail);
+          } catch (err) {
+            fail(err);
+          }
+        };
+
+        // 讓外部可以中止
+        current = {
+          cancel() {
+            en.canceled = true;
+            if (rec && rec.state !== 'inactive') rec.stop();
+            else fail(new Error('已取消'));
+          }
+        };
+      });
+    }
+
+    async function runOne(i) {
+      const en = entries[i];
+      if (en.status === 'failed' && !en.width) return;
+
+      en.canceled = false;
+      en.status = 'running';
+      en.blob = null;
+      renderAll();
+      setProgress(i, 0);
+
+      try {
+        const blob = await compressEntry(en, i);
+        if (blob) {
+          en.blob = blob;
+          en.status = 'done';
+        } else {
+          en.status = 'pending';
+        }
+      } catch (err) {
+        console.error('壓縮失敗:', en.file.name, err);
+        en.status = 'failed';
+      }
+      current = null;
+      setProgress(i, null);
+      renderAll();
+    }
+
+    function downloadEntry(en) {
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(en.blob);
+      link.download = en.file.name.replace(/\.[^/.]+$/, '') + '_min.' + OUTPUT.ext;
+      link.click();
+      URL.revokeObjectURL(link.href);
+    }
+
+    // ==========================================
+    // 事件綁定
+    // ==========================================
+    $(document).ready(function () {
+      $('#fmtLabel').text(OUTPUT ? OUTPUT.label : '這個瀏覽器不支援影片錄製，無法使用本工具');
+      if (!OUTPUT) $('#drop-zone, #btnAll').css({ opacity: 0.5, pointerEvents: 'none' });
+
+      const $dz = $('#drop-zone');
+      $dz.on('click', () => $('#fileInput').click());
+      $dz.on('dragover dragenter', (e) => { e.preventDefault(); $dz.addClass('dragover'); });
+      $dz.on('dragleave drop', (e) => { e.preventDefault(); $dz.removeClass('dragover'); });
+      $dz.on('drop', (e) => handleFiles(e.originalEvent.dataTransfer.files));
+      $('#fileInput').on('change', (e) => { handleFiles(e.target.files); e.target.value = ''; });
+
+      $('#presetSeg button').on('click', function () {
+        preset = $(this).data('preset');
+        $('#presetSeg button').removeClass('active');
+        $(this).addClass('active');
+        renderAll();
+      });
+
+      $('#bitrate, #resolution').on('input change', renderAll);
+
+      // 單支：壓縮 / 停止
+      $('#fileList').on('click', '.do', function () {
+        const i = Number($(this).closest('.file-item').data('i'));
+        if (entries[i].status === 'running') {
+          stopAll = true;
+          if (current) current.cancel();
+          return;
+        }
+        if (running) return;
+        running = true;
+        stopAll = false;
+        $('#btnAll').text('處理中…').prop('disabled', true);
+        runOne(i).then(() => {
+          running = false;
+          $('#btnAll').text('全部壓縮').prop('disabled', entries.length === 0);
+          renderAll();
+        });
+      });
+
+      $('#fileList').on('click', '.dl', function () {
+        const i = Number($(this).closest('.file-item').data('i'));
+        if (entries[i].blob) downloadEntry(entries[i]);
+      });
+
+      // 從清單移除（處理中不開放）
+      $('#fileList').on('click', '.del', function () {
+        if (running) return;
+        const i = Number($(this).closest('.file-item').data('i'));
+        const en = entries[i];
+        if (en && en.url) URL.revokeObjectURL(en.url);
+        entries.splice(i, 1);
+        renderList();
+      });
+
+      // 批次：依序處理尚未完成的影片
+      $('#btnAll').on('click', async function () {
+        if (running) { stopAll = true; if (current) current.cancel(); return; }
+        if (!entries.length) return;
+
+        running = true;
+        stopAll = false;
+        $(this).text('停止');
+        for (let i = 0; i < entries.length; i++) {
+          if (stopAll) break;
+          if (entries[i].blob || (entries[i].status === 'failed' && !entries[i].width)) continue;
+          await runOne(i);
+        }
+        running = false;
+        $(this).text('全部壓縮').prop('disabled', entries.length === 0);
+        renderAll();
+      });
+    });
+  </script>
+</body>
+
+</html>
