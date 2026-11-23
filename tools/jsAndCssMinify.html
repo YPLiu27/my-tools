@@ -513,6 +513,11 @@ body {
       return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
     }
 
+    // Helper: real byte length (UTF-8)
+    function byteLength(str) {
+      return new TextEncoder().encode(str || '').length;
+    }
+
     // Detect language automatically
     function detectLanguage(code) {
       const cssScore = (code.match(/\{[\s\S]*?\}/g) || []).length;
@@ -544,99 +549,169 @@ body {
         .trim();
 
       if (keepHeader) {
-        result = result.replace(/___PRESERVED_HEADER_(\d+)___/g, (_, idx) => preserved[idx] + '\n');
+        // 後面的 ? 用來吃掉空白壓縮後殘留的那一個空格
+        result = result.replace(/___PRESERVED_HEADER_(\d+)___ ?/g, (_, idx) => preserved[idx] + '\n');
       }
 
       return result;
     }
 
+    // 單趟掃描：字串 / 樣板字串 / 正規表達式一律原樣保留，只壓縮「程式碼之間」的空白。
+    // 刻意不做「刪掉所有換行」：沒有分號的程式碼靠換行斷句 (ASI)，刪掉會壞。
     function minifyJS(js, keepHeader) {
-      let preserved = [];
-      let result = js;
+      const src = js;
+      const len = src.length;
+      let out = '';
+      let i = 0;
+      let pendingSpace = false;
+      let pendingNewline = false;
 
-      if (keepHeader) {
-        result = result.replace(/\/\*![\s\S]*?\*\//g, (match) => {
-          preserved.push(match);
-          return `___PRESERVED_HEADER_${preserved.length - 1}___`;
-        });
+      const WORD = /[A-Za-z0-9_$\\]/;
+      // 換行可安全刪除的前／後字元（這些位置不可能發生 ASI 斷句）
+      const DROP_AFTER = '{([;,=+-*/%<>!&|^~?:';
+      const DROP_BEFORE = ')]},;:=&|<>?.';
+      // 這些字元之後出現的 / 是正規表達式，不是除號
+      const REGEX_OK_AFTER = '(,=:[!&|?{};+-*%^~<>';
+      const REGEX_OK_KEYWORDS = ['return', 'typeof', 'instanceof', 'in', 'of', 'new', 'delete', 'void', 'case', 'do', 'else', 'yield', 'await', 'throw'];
+
+      function lastChar() { return out[out.length - 1] || ''; }
+
+      // 兩個字元中間非得留一個空白不可的情況
+      function needSpace(p, n) {
+        if (!p || !n) return false;
+        if (WORD.test(p) && WORD.test(n)) return true;          // let a → leta
+        if ('+-'.includes(p) && '+-'.includes(n)) return true;  // a + +b → a++b
+        if (p === '/' && (n === '/' || n === '*')) return true;  // 變成註解
+        if (p === '<' && n === '!') return true;                 // 變成 <!--
+        return false;
       }
 
-      let i = 0;
-      const len = result.length;
-      let clean = '';
-      let inString = false;
-      let quoteChar = '';
-      let inSingleComment = false;
-      let inMultiComment = false;
+      function flushGap(next) {
+        if (out) {
+          if (pendingNewline) {
+            if (DROP_AFTER.includes(lastChar()) || DROP_BEFORE.includes(next)) {
+              if (needSpace(lastChar(), next)) out += ' ';
+            } else if (lastChar() !== '\n') {
+              out += '\n';
+            }
+          } else if (pendingSpace && needSpace(lastChar(), next)) {
+            out += ' ';
+          }
+        }
+        pendingSpace = false;
+        pendingNewline = false;
+      }
+
+      // 判斷此處的 / 是正規表達式開頭還是除號
+      function regexAllowed() {
+        let j = out.length - 1;
+        while (j >= 0 && /\s/.test(out[j])) j--;
+        if (j < 0) return true;
+        const c = out[j];
+        if (REGEX_OK_AFTER.includes(c)) return true;
+        if (/[A-Za-z0-9_$]/.test(c)) {
+          const m = out.slice(0, j + 1).match(/[A-Za-z0-9_$]+$/);
+          return !!m && REGEX_OK_KEYWORDS.includes(m[0]);
+        }
+        return false; // ) ] 之後一律視為除號
+      }
+
+      function readString(quote) {
+        let s = src[i++];
+        while (i < len) {
+          const c = src[i];
+          if (c === '\\') { s += c + (src[i + 1] || ''); i += 2; continue; }
+          s += c; i++;
+          if (c === quote) break;
+        }
+        return s;
+      }
+
+      function readTemplate() {
+        let s = src[i++];                           // 開頭的 `
+        while (i < len) {
+          const c = src[i];
+          if (c === '\\') { s += c + (src[i + 1] || ''); i += 2; continue; }
+          if (c === '`') { s += c; i++; break; }
+          if (c === '$' && src[i + 1] === '{') {     // ${ } 內容原樣保留
+            s += '${'; i += 2;
+            let depth = 1;
+            while (i < len && depth > 0) {
+              const d = src[i];
+              if (d === '\\') { s += d + (src[i + 1] || ''); i += 2; continue; }
+              if (d === '"' || d === "'") { s += readString(d); continue; }
+              if (d === '`') { s += readTemplate(); continue; }
+              if (d === '{') depth++;
+              if (d === '}') { depth--; if (depth === 0) { s += d; i++; break; } }
+              s += d; i++;
+            }
+            continue;
+          }
+          s += c; i++;
+        }
+        return s;
+      }
+
+      function readRegex() {
+        let s = src[i++];                           // 開頭的 /
+        let inClass = false;
+        while (i < len) {
+          const c = src[i];
+          if (c === '\\') { s += c + (src[i + 1] || ''); i += 2; continue; }
+          if (c === '\n' || c === '\r') break;      // 不合法的正規式，保險中止
+          if (c === '[') inClass = true;
+          else if (c === ']') inClass = false;
+          else if (c === '/' && !inClass) { s += c; i++; break; }
+          s += c; i++;
+        }
+        while (i < len && /[a-z]/i.test(src[i])) { s += src[i]; i++; }  // 旗標 gimsuy
+        return s;
+      }
 
       while (i < len) {
-        const char = result[i];
-        const nextChar = result[i + 1];
+        const c = src[i];
+        const n = src[i + 1];
 
-        // Single line comments
-        if (!inString && !inMultiComment && char === '/' && nextChar === '/') {
-          inSingleComment = true;
-          i += 2;
-          continue;
-        }
-        if (inSingleComment) {
-          if (char === '\n' || char === '\r') inSingleComment = false;
+        if (/\s/.test(c)) {
+          if (c === '\n' || c === '\r') pendingNewline = true; else pendingSpace = true;
           i++;
           continue;
         }
 
-        // Multi line comments
-        if (!inString && !inSingleComment && char === '/' && nextChar === '*') {
-          inMultiComment = true;
-          i += 2;
+        // 單行註解（保留該行的換行，避免影響 ASI）
+        if (c === '/' && n === '/') {
+          while (i < len && src[i] !== '\n' && src[i] !== '\r') i++;
           continue;
         }
-        if (inMultiComment) {
-          if (char === '*' && nextChar === '/') {
-            inMultiComment = false;
-            i += 2;
+
+        // 區塊註解
+        if (c === '/' && n === '*') {
+          const end = src.indexOf('*/', i + 2);
+          const body = end === -1 ? src.slice(i) : src.slice(i, end + 2);
+          i = end === -1 ? len : end + 2;
+          if (keepHeader && body.startsWith('/*!')) {
+            if (out && lastChar() !== '\n') out += '\n';
+            out += body + '\n';
+            pendingSpace = false;
+            pendingNewline = false;
+          } else if (/[\n\r]/.test(body)) {
+            pendingNewline = true;
           } else {
-            i++;
+            pendingSpace = true;
           }
           continue;
         }
 
-        // String literals
-        if (!inString && (char === '"' || char === "'" || char === '`')) {
-          inString = true;
-          quoteChar = char;
-          clean += char;
-          i++;
-          continue;
-        }
-        if (inString) {
-          clean += char;
-          if (char === quoteChar && result[i - 1] !== '\\') inString = false;
-          i++;
-          continue;
-        }
+        if (c === '"' || c === "'") { flushGap(c); out += readString(c); continue; }
+        if (c === '`') { flushGap(c); out += readTemplate(); continue; }
+        if (c === '/' && regexAllowed()) { flushGap(c); out += readRegex(); continue; }
 
-        // Whitespace handling
-        if (/\s/.test(char)) {
-          const last = clean[clean.length - 1] || '';
-          if (last && /[a-zA-Z0-9_$\\]/.test(last) && /[a-zA-Z0-9_$\\]/.test(nextChar || '')) {
-            clean += ' ';
-          }
-          i++;
-          continue;
-        }
-
-        clean += char;
+        flushGap(c);
+        out += c;
         i++;
       }
 
-      result = clean.replace(/\s*([=+\-*\/%><!&|^~?:;,{}()\[\]])\s*/g, '$1').trim();
-
-      if (keepHeader) {
-        result = result.replace(/___PRESERVED_HEADER_(\d+)___/g, (_, idx) => preserved[idx] + '\n');
-      }
-
-      return result;
+      return out.trim();
     }
 
     // ==========================================
@@ -691,7 +766,7 @@ body {
         const src = $('#min_source').val();
         if (!src.trim()) {
           $('#min_result').val('');
-          updateMinStats(0, 0);
+          updateMinStats('', '');
           return;
         }
 
@@ -708,10 +783,12 @@ body {
         }
 
         $('#min_result').val(minified);
-        updateMinStats(src.length, minified.length);
+        updateMinStats(src, minified);
       });
 
-      function updateMinStats(origLen, minLen) {
+      function updateMinStats(origCode, minCode) {
+        const origLen = byteLength(origCode);
+        const minLen = byteLength(minCode);
         $('#stat_orig_size').text(formatBytes(origLen));
         $('#stat_min_size').text(formatBytes(minLen));
         const saved = origLen > 0 ? Math.round(((origLen - minLen) / origLen) * 100) : 0;
@@ -729,7 +806,7 @@ body {
       $('#btn_min_clear').on('click', function () {
         $('#min_source').val('');
         $('#min_result').val('');
-        updateMinStats(0, 0);
+        updateMinStats('', '');
       });
 
       // Beautify Action
