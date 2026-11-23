@@ -57,12 +57,32 @@
 
     input[type="range"] {
       flex: 1;
+      min-width: 0;
+    }
+
+    .controls label {
+      flex-shrink: 0;
+      white-space: nowrap;
     }
 
     #qualityValue {
       font-weight: bold;
       color: var(--primary);
-      width: 40px;
+      flex-shrink: 0;
+      white-space: nowrap;
+    }
+
+    #qNum {
+      width: 52px;
+      text-align: right;
+      font-size: 14px;
+      font-weight: bold;
+      padding: 2px 4px;
+      margin-right: 2px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--card-bg);
+      color: var(--text-main);
     }
 
     .file-list {
@@ -79,6 +99,8 @@
       padding: 8px 12px;
       border-bottom: 1px solid var(--border);
       display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
       justify-content: space-between;
       align-items: center;
       font-size: 13px;
@@ -88,6 +110,29 @@
       display: flex;
       flex-direction: column;
       gap: 2px;
+      flex: 1 1 140px;
+      min-width: 0;
+    }
+
+    .file-name {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .file-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .dl-btn {
+      width: auto;
+      padding: 4px 10px;
+      font-size: 11px;
+      font-weight: normal;
+      border-radius: 6px;
     }
 
     .file-size {
@@ -144,9 +189,9 @@
     </div>
 
     <div class="controls">
-      <label style="font-size: 14px;">品質</label>
+      <label for="quality" style="font-size: 14px;">品質</label>
       <input type="range" id="quality" min="0.1" max="1.0" step="0.01" value="0.85">
-      <span id="qualityValue">85%</span>
+      <span id="qualityValue"><input type="number" id="qNum" min="10" max="100" step="1" value="85" aria-label="壓縮品質百分比">%</span>
     </div>
 
     <div class="file-list" id="fileList"></div>
@@ -174,6 +219,11 @@
     return `${year}${month}${day}`;
   }
 
+  // --- 取得當下小時 (HH) ---
+  function getFormattedHour() {
+    return String(new Date().getHours()).padStart(2, '0');
+  }
+
   // --- 轉檔邏輯 ---
   const fileInput = document.getElementById('fileInput');
   const dropZone = document.getElementById('drop-zone');
@@ -182,7 +232,10 @@
   const canvas = document.getElementById('canvas');
   const ctx = canvas.getContext('2d');
 
-  let selectedFiles = [];
+  // entries: { file, isHeic, source, blob, done, failed }
+  let entries = [];
+  let runToken = 0;
+  let qTimer = null;
 
   dropZone.onclick = () => fileInput.click();
   fileInput.onchange = (e) => handleFiles(e.target.files);
@@ -191,90 +244,205 @@
   dropZone.ondrop = (e) => { e.preventDefault(); dropZone.classList.remove('hover'); handleFiles(e.dataTransfer.files); };
 
   function handleFiles(files) {
-    selectedFiles = Array.from(files);
-    if (selectedFiles.length > 0) {
-      fileList.innerHTML = selectedFiles.map((f, index) => {
-        const isHeic = f.name.toLowerCase().endsWith('.heic');
-        return `<div class="file-item" data-index="${index}">
-                  <div class="file-info">
-                    <span>${f.name}</span>
-                    <span class="file-size">原始大小: ${formatBytes(f.size)}</span>
-                  </div>
-                  <span class="status-tag ${isHeic ? 'heic-tag' : ''}" id="status-${index}">${isHeic ? 'HEIC 待轉換' : '待處理'}</span>
-              </div>`;
-      }).join('');
-      fileList.style.display = 'block';
-      convertBtn.disabled = false;
+    const picked = Array.from(files);
+    if (picked.length === 0) return;
+
+    entries = picked.map(f => ({
+      file: f,
+      isHeic: f.name.toLowerCase().endsWith('.heic'),
+      source: null, blob: null, done: false, failed: false
+    }));
+
+    fileList.innerHTML = entries.map((en, index) => {
+      return `<div class="file-item" data-index="${index}">
+                <div class="file-info">
+                  <span class="file-name">${en.file.name}</span>
+                  <span class="file-size" id="size-${index}">原始 ${formatBytes(en.file.size)} → ${en.isHeic ? '轉檔後計算' : '計算中…'}</span>
+                </div>
+                <div class="file-right">
+                  <span class="status-tag ${en.isHeic ? 'heic-tag' : ''}" id="status-${index}">${en.isHeic ? 'HEIC 待轉換' : '待處理'}</span>
+                  <button class="dl-btn" data-index="${index}">下載</button>
+                </div>
+            </div>`;
+    }).join('');
+    fileList.style.display = 'block';
+    convertBtn.disabled = false;
+    estimateAll();
+  }
+
+  // --- 滑桿 / 數字框雙向連動 ---
+  const qInput = document.getElementById('quality');
+  const qNum = document.getElementById('qNum');
+
+  // 以數字框為準
+  function getQuality() {
+    let v = Math.round(Number(qNum.value));
+    if (!Number.isFinite(v)) v = 85;
+    return Math.min(100, Math.max(10, v)) / 100;
+  }
+
+  function scheduleEstimate() {
+    clearTimeout(qTimer);
+    qTimer = setTimeout(estimateAll, 300);
+  }
+
+  qInput.oninput = () => {
+    qNum.value = Math.round(qInput.value * 100);
+    scheduleEstimate();
+  };
+
+  // 輸入途中只接受 10~100 的有效值，離開欄位時再強制修正
+  qNum.oninput = () => {
+    const v = Number(qNum.value);
+    if (!Number.isFinite(v) || v < 10 || v > 100) return;
+    qInput.value = v / 100;
+    scheduleEstimate();
+  };
+
+  qNum.onchange = () => {
+    let v = Math.round(Number(qNum.value));
+    if (!Number.isFinite(v)) v = Math.round(qInput.value * 100);
+    v = Math.min(100, Math.max(10, v));
+    qNum.value = v;
+    qInput.value = v / 100;
+    scheduleEstimate();
+  };
+
+  // --- 單一檔案轉 WebP（HEIC 先解成 JPEG，解過就快取起來）---
+  async function convertEntry(en, quality) {
+    if (!en.source) {
+      if (en.isHeic) {
+        const converted = await heic2any({ blob: en.file, toType: "image/jpeg", quality: 0.95 });
+        en.source = Array.isArray(converted) ? converted[0] : converted;
+      } else {
+        en.source = en.file;
+      }
+    }
+
+    const img = await createImageBitmap(en.source);
+    canvas.width = img.width;
+    canvas.height = img.height;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    en.blob = await new Promise(res => canvas.toBlob(res, 'image/webp', quality));
+    img.close();
+    return en.blob;
+  }
+
+  function renderSize(i, en) {
+    const el = document.getElementById(`size-${i}`);
+    if (!el) return;
+    const head = `原始 ${formatBytes(en.file.size)} → `;
+    if (en.failed) { el.innerText = head + '轉檔失敗'; return; }
+    if (!en.blob) { el.innerText = head + (en.isHeic ? '轉檔後計算' : '計算中…'); return; }
+    const ratio = Math.round((1 - en.blob.size / en.file.size) * 100);
+    el.innerText = `${head}${en.done ? '實際' : '預計'} ${formatBytes(en.blob.size)} (${ratio < 0 ? '+' : '-'}${Math.abs(ratio)}%)`;
+  }
+
+  // --- 以目前品質實際轉一次，取得精準的預計大小（HEIC 除外，解碼太慢）---
+  async function estimateAll() {
+    if (entries.length === 0) return;
+    const token = ++runToken;
+
+    for (let i = 0; i < entries.length; i++) {
+      const en = entries[i];
+      if (en.isHeic && !en.source) continue; // 尚未解過的 HEIC 不預估
+      en.done = false;
+      try {
+        await convertEntry(en, getQuality());
+        en.failed = false;
+      } catch (err) {
+        console.error("預估失敗:", en.file.name, err);
+        en.failed = true;
+      }
+      if (token !== runToken) return;
+      renderSize(i, en);
     }
   }
 
-  // --- 滑桿數值即時更新 ---
-  const qInput = document.getElementById('quality');
-  const qShow = document.getElementById('qualityValue');
+  // --- 單張下載：已轉好就直接存，沒轉好就當場轉這一張 ---
+  fileList.onclick = async (e) => {
+    const btn = e.target.closest('.dl-btn');
+    if (!btn) return;
+    const i = Number(btn.dataset.index);
+    const en = entries[i];
+    if (!en) return;
 
-  qInput.oninput = () => {
-      qShow.innerText = Math.round(qInput.value * 100) + '%';
+    if (!en.blob) {
+      btn.disabled = true;
+      btn.innerText = '處理中';
+      try {
+        await convertEntry(en, getQuality());
+        en.failed = false;
+      } catch (err) {
+        console.error("檔案處理失敗:", en.file.name, err);
+        en.failed = true;
+      }
+      btn.disabled = false;
+      btn.innerText = '下載';
+      renderSize(i, en);
+      if (en.failed) { markStatus(i, '失敗', '#f8d7da', '#842029'); return; }
+    }
+
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(en.blob);
+    link.download = en.file.name.replace(/\.[^/.]+$/, "") + ".webp";
+    link.click();
+    URL.revokeObjectURL(link.href);
   };
+
+  function markStatus(i, text, bg, color) {
+    const tag = document.getElementById(`status-${i}`);
+    if (!tag) return;
+    tag.innerText = text;
+    tag.style.background = bg;
+    tag.style.color = color;
+  }
 
   convertBtn.onclick = async () => {
     convertBtn.innerText = '正在處理 (HEIC 可能較慢)...';
     convertBtn.disabled = true;
     const zip = new JSZip();
-    const quality = parseFloat(document.getElementById('quality').value);
+    const quality = getQuality();
+    const token = ++runToken;
+    let totalOrigin = 0, totalWebp = 0;
 
-    for (let i = 0; i < selectedFiles.length; i++) {
-        const file = selectedFiles[i];
-        const statusTag = document.getElementById(`status-${i}`);
-        
+    for (let i = 0; i < entries.length; i++) {
+        const en = entries[i];
+
         try {
-            let imageSource;
-            if (file.name.toLowerCase().endsWith('.heic')) {
-                const convertedBlob = await heic2any({ blob: file, toType: "image/jpeg", quality: 0.95 });
-                imageSource = Array.isArray(convertedBlob) ? convertedBlob[0] : convertedBlob;
-            } else {
-                imageSource = file;
-            }
+            await convertEntry(en, quality);
+            en.failed = false;
+            en.done = true;
 
-            const img = await createImageBitmap(imageSource);
-            
-            canvas.width = img.width;
-            canvas.height = img.height;
-
-            ctx.clearRect(0, 0, canvas.width, canvas.height); 
-            ctx.imageSmoothingEnabled = true;
-            ctx.imageSmoothingQuality = 'high';
-            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-
-            const webpBlob = await new Promise(res => canvas.toBlob(res, 'image/webp', quality));
-            
-            const newName = file.name.replace(/\.[^/.]+$/, "") + ".webp";
-            zip.file(newName, webpBlob);
+            zip.file(en.file.name.replace(/\.[^/.]+$/, "") + ".webp", en.blob);
+            totalOrigin += en.file.size;
+            totalWebp += en.blob.size;
 
             // 即時更新清單中轉檔後的檔案大小與成功狀態
-            if (statusTag) {
-                statusTag.innerText = `已轉 WebP (${formatBytes(webpBlob.size)})`;
-                statusTag.style.background = '#d1e7dd';
-                statusTag.style.color = '#0f5132';
-            }
-
-            img.close(); 
+            renderSize(i, en);
+            markStatus(i, '已轉 WebP', '#d1e7dd', '#0f5132');
         } catch (err) {
-            console.error("檔案處理失敗:", file.name, err);
-            if (statusTag) {
-                statusTag.innerText = '失敗';
-                statusTag.style.background = '#f8d7da';
-                statusTag.style.color = '#842029';
-            }
+            console.error("檔案處理失敗:", en.file.name, err);
+            en.failed = true;
+            renderSize(i, en);
+            markStatus(i, '失敗', '#f8d7da', '#842029');
         }
+        if (token !== runToken) break;
     }
 
     const content = await zip.generateAsync({ type: "blob" });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(content);
-    
-    // 下載檔名自動帶入當日日期 (例如: webp_images_20261027.zip)
-    link.download = `webp_images_${getFormattedDate()}.zip`;
+
+    // 下載檔名：日期 + 時 + 實際縮減率 (例如: webp_20261123_14_-62pct.zip)
+    const ratio = totalOrigin > 0 ? Math.round((1 - totalWebp / totalOrigin) * 100) : 0;
+    const ratioTag = `${ratio < 0 ? '+' : '-'}${Math.abs(ratio)}pct`;
+    link.download = `webp_${getFormattedDate()}_${getFormattedHour()}_${ratioTag}.zip`;
     link.click();
+    URL.revokeObjectURL(link.href);
 
     convertBtn.innerText = '開始轉檔並下載 ZIP';
     convertBtn.disabled = false;

@@ -59,6 +59,18 @@
       cursor: pointer;
     }
 
+    #qNum {
+      width: 56px;
+      text-align: right;
+      font-size: 14px;
+      padding: 2px 4px;
+      margin-right: 2px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--card-bg);
+      color: var(--text-main);
+    }
+
     .file-list {
       text-align: left;
       max-height: 200px;
@@ -74,6 +86,8 @@
       border-bottom: 1px solid var(--border);
       font-size: 13px;
       display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
       justify-content: space-between;
       align-items: center;
     }
@@ -81,6 +95,30 @@
     .size-info {
       color: #888;
       font-size: 11px;
+    }
+
+    .file-name {
+      flex: 1 1 140px;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      margin-right: 10px;
+    }
+
+    .file-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .dl-btn {
+      width: auto;
+      padding: 4px 10px;
+      font-size: 11px;
+      font-weight: normal;
+      border-radius: 6px;
     }
 
     button {
@@ -118,7 +156,7 @@
       <div class="controls">
         <div class="slider-label">
           <span>壓縮品質 (Quality)</span>
-          <span id="qLabel">70%</span>
+          <span><input type="number" id="qNum" min="10" max="100" step="5" value="70">%</span>
         </div>
         <input type="range" id="quality" min="0.1" max="1.0" step="0.05" value="0.7">
         <p style="font-size: 11px; color: #888; margin-top: 10px; text-align: left;">提示：數值越低，檔案越小，但畫質會下降。</p>
@@ -136,12 +174,64 @@
 
     const fInput = document.getElementById('f');
     const qInput = document.getElementById('quality');
-    const qLabel = document.getElementById('qLabel');
+    const qNum = document.getElementById('qNum');
     const fileList = document.getElementById('fileList');
     const compBtn = document.getElementById('compBtn');
-    let selectedFiles = [];
+    // entries: { file, bitmap, blob, done }
+    let entries = [];
+    let runToken = 0;
+    let qTimer = null;
 
-    qInput.oninput = (e) => qLabel.innerText = Math.round(e.target.value * 100) + '%';
+    // 以數字框為準（滑桿 step 為 5%，手動輸入可給任意整數）
+    function getQuality() {
+      let v = Math.round(Number(qNum.value));
+      if (!Number.isFinite(v)) v = 70;
+      return Math.min(100, Math.max(10, v)) / 100;
+    }
+
+    function formatSize(bytes) {
+      return bytes < 1024 * 1024
+        ? (bytes / 1024).toFixed(1) + ' KB'
+        : (bytes / 1024 / 1024).toFixed(2) + ' MB';
+    }
+
+    function today() {
+      const d = new Date();
+      const p = (n) => String(n).padStart(2, '0');
+      return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
+    }
+
+    function outName(file) {
+      return file.name.replace(/\.[^/.]+$/, "") + "_min.jpg";
+    }
+
+    function scheduleEstimate() {
+      clearTimeout(qTimer);
+      qTimer = setTimeout(estimateAll, 300);
+    }
+
+    // 滑桿 → 數字框
+    qInput.oninput = (e) => {
+      qNum.value = Math.round(e.target.value * 100);
+      scheduleEstimate();
+    };
+
+    // 數字框 → 滑桿（輸入途中只接受 10~100 的有效值，離開欄位時再強制修正）
+    qNum.oninput = () => {
+      const v = Number(qNum.value);
+      if (!Number.isFinite(v) || v < 10 || v > 100) return;
+      qInput.value = v / 100;
+      scheduleEstimate();
+    };
+
+    qNum.onchange = () => {
+      let v = Math.round(Number(qNum.value));
+      if (!Number.isFinite(v)) v = Math.round(qInput.value * 100);
+      v = Math.min(100, Math.max(10, v));
+      qNum.value = v;
+      qInput.value = v / 100;
+      scheduleEstimate();
+    };
 
     fInput.onchange = (e) => handleFiles(e.target.files);
 
@@ -152,45 +242,105 @@
     dz.ondrop = (e) => { e.preventDefault(); dz.style.borderColor = ""; handleFiles(e.dataTransfer.files); };
 
     function handleFiles(files) {
-      selectedFiles = Array.from(files).filter(f => f.type.match('image.*'));
-      if (selectedFiles.length > 0) {
-        fileList.innerHTML = selectedFiles.map(f => `
+      const picked = Array.from(files).filter(f => f.type.match('image.*'));
+      if (picked.length === 0) return;
+
+      entries = picked.map(f => ({ file: f, bitmap: null, blob: null, done: false }));
+      fileList.innerHTML = entries.map((en, i) => `
                 <div class="file-item">
-                    <span>${f.name}</span>
-                    <span class="size-info">${(f.size / 1024).toFixed(1)} KB</span>
+                    <span class="file-name">${en.file.name}</span>
+                    <span class="file-right">
+                        <span class="size-info" id="size-${i}">${formatSize(en.file.size)} → 計算中…</span>
+                        <button class="dl-btn" data-i="${i}">下載</button>
+                    </span>
                 </div>
             `).join('');
-        fileList.style.display = 'block';
-        compBtn.disabled = false;
+      fileList.style.display = 'block';
+      compBtn.disabled = false;
+      estimateAll();
+    }
+
+    // 點單張下載：已算好就直接下載，還沒算好就當場壓這一張
+    fileList.onclick = async (e) => {
+      const btn = e.target.closest('.dl-btn');
+      if (!btn) return;
+      const en = entries[Number(btn.dataset.i)];
+      if (!en) return;
+
+      if (!en.blob) {
+        btn.disabled = true;
+        btn.innerText = '處理中';
+        await compressEntry(en, getQuality());
+        btn.disabled = false;
+        btn.innerText = '下載';
+      }
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(en.blob);
+      link.download = outName(en.file);
+      link.click();
+      URL.revokeObjectURL(link.href);
+    };
+
+    // 壓縮邏輯：統一轉為 jpeg 輸出以達到壓縮效果
+    // 如果是 PNG 且想保持透明度，壓縮率通常不高，故此工具優先以體積優化為主
+    async function compressEntry(en, quality) {
+      if (!en.bitmap) en.bitmap = await createImageBitmap(en.file);
+      const canvas = document.getElementById('canvas');
+      const ctx = canvas.getContext('2d');
+      canvas.width = en.bitmap.width;
+      canvas.height = en.bitmap.height;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(en.bitmap, 0, 0);
+      en.blob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', quality));
+      return en.blob;
+    }
+
+    function renderSize(i, en) {
+      const el = document.getElementById('size-' + i);
+      if (!el) return;
+      const label = en.done ? '實際' : '預計';
+      const ratio = Math.round((1 - en.blob.size / en.file.size) * 100);
+      el.innerText = `${formatSize(en.file.size)} → ${label} ${formatSize(en.blob.size)} (${ratio > 0 ? '-' : '+'}${Math.abs(ratio)}%)`;
+    }
+
+    // 以目前品質實際壓一次，取得精準的預計大小
+    async function estimateAll() {
+      if (entries.length === 0) return;
+      const token = ++runToken;
+      const quality = getQuality();
+
+      for (let i = 0; i < entries.length; i++) {
+        const en = entries[i];
+        en.done = false;
+        await compressEntry(en, quality);
+        if (token !== runToken) return;
+        renderSize(i, en);
       }
     }
 
     compBtn.onclick = async () => {
       compBtn.innerText = '壓縮中...';
       compBtn.disabled = true;
+
+      const token = ++runToken;
+      const quality = getQuality();
       const zip = new JSZip();
-      const canvas = document.getElementById('canvas');
-      const ctx = canvas.getContext('2d');
-      const quality = parseFloat(qInput.value);
 
-      for (let file of selectedFiles) {
-        const img = await createImageBitmap(file);
-        canvas.width = img.width;
-        canvas.height = img.height;
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(img, 0, 0);
-
-        // 壓縮邏輯：統一轉為 jpeg 輸出以達到壓縮效果
-        // 如果是 PNG 且想保持透明度，壓縮率通常不高，故此工具優先以體積優化為主
-        const blob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', quality));
-        zip.file(file.name.replace(/\.[^/.]+$/, "") + "_min.jpg", blob);
+      for (let i = 0; i < entries.length; i++) {
+        const en = entries[i];
+        await compressEntry(en, quality);
+        if (token !== runToken) break;
+        en.done = true;
+        renderSize(i, en);
+        zip.file(outName(en.file), en.blob);
       }
 
       const content = await zip.generateAsync({ type: "blob" });
       const link = document.createElement('a');
       link.href = URL.createObjectURL(content);
-      link.download = "compressed_images.zip";
+      link.download = `compressed_q${Math.round(quality * 100)}_${today()}.zip`;
       link.click();
+      URL.revokeObjectURL(link.href);
 
       compBtn.innerText = '開始壓縮並下載 ZIP';
       compBtn.disabled = false;
